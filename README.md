@@ -2,6 +2,7 @@
 
 ### Team Members
 1. Leah Bates
+2. Jonathan Kloppenburg
 
 ### Final Proposal
 1. Persona/Scenario
