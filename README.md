@@ -4,7 +4,7 @@
 1. Leah Bates
 2. Jonathan Kloppenburg
 
-### [Final Proposal] (https://canvas.wisc.edu/courses/438789/pages/final-project-instructions)
+### [Final Proposal](https://canvas.wisc.edu/courses/438789/pages/final-project-instructions)
 1. Persona/Scenario
     1. Persona
         1. Description of a prototypical, target user and include a discussion of their interests and responsibilities (e.g., their job description if a professional/scientist; their motivation if part of the general public), with a specific focus on their key needs, expertise levels (across domains and technologies), and motivation. 
