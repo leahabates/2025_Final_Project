@@ -1,1 +1,10 @@
 /*insert style here*/
+.counties {
+    fill: #FFF;
+    stroke: #CCC;
+    stroke-width: 2px;
+}
+.tri {
+    fill: red;
+    opacity: 0.7;
+}
