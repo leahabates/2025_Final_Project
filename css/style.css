@@ -47,3 +47,53 @@
     display: block;
     margin-bottom: 6px;
 }
+#legendContainer {
+    margin-top: 15px;
+    padding: 10px;
+    background: #fff;
+    border-radius: 5px;
+    font-family: sans-serif;
+}
+
+#legendContainer text {
+    fill: #000; /* Black text for readability */
+    font-size: 12px;
+    dominant-baseline: middle;
+    alignment-baseline: middle;
+}
+
+#legendContainer .legendTitle {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+.infolabel {
+    position: absolute;
+    z-index: 1000;
+    background-color: rgba(255, 255, 255, 0.95); /* dark background */
+    color: #000000; /* white text */
+    padding: 12px 16px;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    max-width: 260px;
+}
+
+.infolabel h2 {
+    font-size: 16px;
+    margin: 0 0 6px;
+    padding: 0;
+    font-weight: 600;
+    color: #000000; /* optional accent color */
+}
+
+.infolabel b {
+    font-weight: 500;
+    color: #000000; /* softer bold */
+}
+
+.infolabel .labelname {
+    display: none; /* optional – hides redundant name */
+}

@@ -69,6 +69,8 @@ function setMap(){
         // add cancer alley counites
         let colorScale = makeColorScale(csvData);
         setEnumnerationUnits(la_cancer_parish, map, path, colorScale);
+
+        setLegend(colorScale, csvData);
         
        // add mississippi
        setRiver(la_river, map, path);
@@ -138,7 +140,18 @@ function setTRI(tri_sites, map, projection){
                 var coords = projection(d.geometry.coordinates);
                  return "translate (" + coords + ")";
             })
-}
+            .on("mouseover", function(event, d){
+                console.log("TRI properties:", d.properties);
+                setLabel(d.properties); // show popup
+            })
+            .on("mousemove", function(event){
+                moveLabel(event); // follow mouse
+            })
+            .on("mouseout", function(){
+                d3.select(".infolabel").remove(); // remove popup
+            });
+};
+
 function makeColorScale (data){
     var colorClasses = ['#ffffd4','#fed98e','#fe9929','#d95f0e','#993404'];
 
@@ -199,6 +212,9 @@ function createRadioButtons(attributes, csvData) {
                 console.log("Expressed changed to:", expressed);
                 const colorScale = makeColorScale(csvData);
                 recolorMap(colorScale);
+                
+                d3.select("#legendContainer").selectAll("svg").remove();
+                setLegend(colorScale, csvData);
             });
     
         container.append("label")
@@ -207,4 +223,103 @@ function createRadioButtons(attributes, csvData) {
     
         container.append("br");
     });
+};
+function setLegend(colorScale, csvData){
+    // define the legen size and position
+    var legendWidth = window.innerWidth * 0.25,
+        legendHeight = window.innerHeight *.1;
+
+    // get map height dynamically
+    var mapHeight = d3.select(".map").node().getBoundingClientRect().height;
+
+    // Calculate the position from the bottom
+    var bottomMargin = mapHeight;
+
+    //create the SVG for the legend
+    var legend = d3.select("#legendContainer")
+        .append("svg")
+        .attr("class", "legend")
+        .attr("width", legendWidth)
+        .attr("height", legendHeight + 30)
+        
+
+    // define the color classes (range) and labels
+    var colorClasses = colorScale.range();
+    var classLabels = [];
+
+    for (var i = 0; i < colorClasses.length; i++) {
+        //Get the range for each color class 
+        var minVal = colorScale.invertExtent(colorClasses[i])[0];
+        var maxVal = colorScale.invertExtent(colorClasses[i])[1];
+        classLabels.push(`${Math.round(minVal)} - ${Math.round(maxVal)}`);
+    }
+
+    legend.append("text")
+        .attr("class", "legendTitle")
+        .attr("x", 5)
+        .attr("y", 14)  // Adjust Y positioning
+        .style("font-size", "16px") // Make the title larger
+        .style("font-weight", "bold")
+        .style("fill", "#FFF") // Ensure it's white and visible
+        .text("Legend: " + expressed);
+
+    // Create a group for the legend items
+    var legendItem = legend.selectAll(".legendItem")
+        .data(colorClasses)
+        .enter()
+        .append("g")
+        .attr("class", "legendItem")
+        .attr("transform", function (d, i){
+            return "translate(0," + (i * 20 ) + ")";
+        });
+
+    //create a rectange for each color class
+    legendItem.append("rect")
+        .attr("width", legendWidth / colorClasses.length)
+        .attr("height", 15)
+        .attr("y", 20)
+        .style("fill", function (d){ return d; });
+
+    //add labels
+    legendItem.append("text")
+        .attr("x", (legendWidth / colorClasses.length))
+        .attr("y", 30)
+        .attr("text-anchor","start")
+        .text(function(d, i){ return classLabels[i]; });
+};
+function setLabel(props){   
+        // Create label content based on TRI properties
+    var labelContent = `
+        <h2>${props["4. FACILIT"]}</h2>
+        <b>Street:</b> ${props["5. STREET"]}<br>
+        <b>City:</b> ${props["6. CITY"]}<br>
+        <b>County:</b> ${props["7. COUNTY"]}<br>
+        <b>Chemical:</b> ${props["37. CHEMIC"] || "N/A"}<br>
+        <b>Carcinogenic:</b> ${props["46. CARCIN"]}<br>
+        <b>Industry:</b> ${props["23. INDUST"]}<br>
+        <b>FRS ID:</b> ${props["3. FRS ID"]}
+    `;
+    
+        //create info label div
+        var infolabel = d3.select("body")
+            .append("div")
+            .attr("class", "infolabel")
+            .html(labelContent);
+    
+        var regionName = infolabel.append("div")
+            .attr("class", "labelname")
+            .html(props.FACILIT);
+         };
+
+function moveLabel(event){
+    // get the label div
+    var label = d3.select(".infolabel");
+        
+            // calculate position (offset slightly so it doesn't block the cursor)
+    var x = event.pageX + 10;
+    var y = event.pageY - 75;
+        
+            // move the label
+    label.style("left", x + "px")
+             .style("top", y + "px");
 };
