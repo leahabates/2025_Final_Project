@@ -1,0 +1,84 @@
+/*insert style here*/
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+.map-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+#map-container-top {
+    margin-bottom: 20px;
+}
+
+#map-container-bottom {
+    margin-top: 20px;
+}
+
+.map {
+    border: 1px solid #ccc;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.counties {
+    fill: #f0f0f0;
+    stroke: #999;
+    stroke-width: 0.5px;
+}
+
+.cancer_parish {
+    fill: #d3d3d3;
+    stroke: #666;
+    stroke-width: 0.5px;
+    pointer-events: none;
+}
+
+.mississippi {
+    stroke: #1E90FF;
+    stroke-width: 2px;
+}
+
+.tri {
+    fill: #FF4500;
+    stroke: #FFF;
+    stroke-width: 0.5px;
+}
+
+.parish-label {
+    font-size: 10px;
+    fill: #333;
+    text-shadow: 0 0 2px #FFF;
+    pointer-events: none;
+}
+
+
+/* Choropleth specific styles for the bottom map*/
+.county-choropleth {
+    stroke: #fff;
+    stroke-width: 0.5px;
+}
+
+.legend {
+    font-size: 12px;
+}
+
+.legend-title {
+    font-weight: bold;
+}
+
+.axis text {
+    font-size: 10px;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
