@@ -1,9 +1,9 @@
 //insert code here!
-var attrArray = ["Total_pop", "white", "black", "poverty_rates", "cancer_inc_rate_per_100000"]
+var attrArray = ["Total_Pop", "white", "black", "poverty_rates", "cancer_inc_rate_per_100000"]
 
 var expressed = attrArray[0]
 
-window.onload = setMap();
+window.onload = setMap;
 
 // set up map
 function setMap(){
@@ -13,7 +13,7 @@ function setMap(){
      height = window.innerHeight * 1 ;
 
  //create new svg container for the map
-    var map = d3.select("body")
+    var map = d3.select("#mapContainer")
          .append("svg")
          .attr("class", "map")
          .attr("width", width)
@@ -42,8 +42,8 @@ function setMap(){
 
     // callback function
     function callback(data){
-        var csvData = data[0],
-            county = data[1],
+        var csvData = data[0];
+        var county = data[1],
             cancer_parish = data[2],
             river = data[3],
             sites = data[4];
@@ -63,45 +63,21 @@ function setMap(){
         la_cancer_parish.features = joinData(la_cancer_parish.features, csvData);
         //console.log(la_cancer_parish.features[0].properties); // to verify
          
-        // add  LA counties
-        var counties = map.append("path")
-            .datum(la_county)
-            .attr("class", "counties")
-            .attr("d", path);
+        // add  LA  background counties
+        setBackground(la_county, map, path)
 
-        // add cancer alley counties
-        var cancer_parish = map.selectAll(".cancer_parish")
-            .data(la_cancer_parish.features)
-            .enter()
-            .append("path")
-            .attr("class", function(d){
-                return "cancer_parish regions " + d.properties.NAME;
-            })
-            .attr("d", path)
+        // add cancer alley counites
+        let colorScale = makeColorScale(csvData);
+        setEnumnerationUnits(la_cancer_parish, map, path, colorScale);
+        
+       // add mississippi
+       setRiver(la_river, map, path);
+       
+       // add TRI sites
+       setTRI(tri_sites, map, projection);
 
-        var mississippi = map.selectAll(".mississippi")
-             .data(la_river.features)
-             .enter()
-             .append("path")
-             .attr("class", function (d){
-                 return "mississippi " + d.properties.name;
-             })
-             .attr("d", path)
-             .attr("fill", "none")
-             .attr("stroke-width", 4)    
-
-        var tri = map.selectAll(".tri")
-            .data(tri_sites.features)
-            .enter()
-            .append("circle")
-            .attr("class", function (d){
-                return "tri " + d.properties.FACILIT;
-            })
-            .attr("r", 3)
-             .attr ("transform", function(d){
-                var coords = projection(d.geometry.coordinates);
-                 return "translate (" + coords + ")";
-            })
+       createRadioButtons(attrArray, csvData);
+  
     };
 };
 
@@ -114,18 +90,121 @@ function joinData(la_cancer_parish, csvData){
         //loop through geojson to get the correct county
         for (var a = 0; a < la_cancer_parish.length; a++){
             var geojsonProps = la_cancer_parish[a].properties;
-            var geojsonKey = geojsonProps.NAME_ALT;
+            var geojsonKey = geojsonProps.NAME_EN;
 
             //the keys match
             if (geojsonKey == csvKey){
 
                 attrArray.forEach(function(attr){
-                    var val = parseFloat(csvRegion[attr]);
+                    var val = parseFloat(csvRegion[attr].replace(/,/g, ""));
                     geojsonProps[attr] = val;
-                    
                 });
             }
         }
     }
     return la_cancer_parish;
+};
+
+function setBackground(la_county, map, path){
+    var counties = map.append("path")
+            .datum(la_county)
+            .attr("class", "counties")
+            .attr("d", path);
+};
+
+function setRiver(la_river, map, path){
+    var mississippi = map.selectAll(".mississippi")
+             .data(la_river.features)
+             .enter()
+             .append("path")
+             .attr("class", function (d){
+                 return "mississippi " + d.properties.name;
+             })
+             .attr("d", path)
+             .attr("fill", "none")
+             .attr("stroke-width", 4)
+};
+
+function setTRI(tri_sites, map, projection){
+    var tri = map.selectAll(".tri")
+            .data(tri_sites.features)
+            .enter()
+            .append("circle")
+            .attr("class", function (d){
+                return "tri " + d.properties.FACILIT;
+            })
+            .attr("r", 3)
+             .attr ("transform", function(d){
+                var coords = projection(d.geometry.coordinates);
+                 return "translate (" + coords + ")";
+            })
+}
+function makeColorScale (data){
+    var colorClasses = ['#ffffd4','#fed98e','#fe9929','#d95f0e','#993404'];
+
+    //craete color scale generator
+    var colorScale = d3.scaleQuantile()
+        .range(colorClasses);
+    
+    //build array of all values for the expressed attribute
+    var domainArray =[]
+    for (var i=0; i<data.length; ++i){
+        var val = parseFloat(data[i][expressed]);
+        if (!isNaN(val)) domainArray.push(val);
+    };
+
+    //assign array of expressed values as scale domain
+    colorScale.domain(domainArray);
+
+    return colorScale;
+};
+//function to set coloring for the enumeration units
+function setEnumnerationUnits(la_cancer_parish, map, path, colorScale){
+    var cancer_parish = map.selectAll(".cancer_parish")
+        .data(la_cancer_parish.features)
+        .enter()
+        .append("path")
+        .attr("class", function(d){
+            return "cancer_parish regions " + d.properties.NAME_EN;
+        })
+        .attr("d", path)
+        .style("fill", function(d){
+            return colorScale(d.properties[expressed]);
+        })
+};
+//function to recolor the map
+function recolorMap(colorScale){
+    d3.selectAll(".cancer_parish")
+        .transition()
+        .duration(500)
+        .style("fill", function(d){
+            const val = d.properties[expressed];
+            return colorScale(val) || "#ccc"; // Fallback if data is missing
+        });
+    };
+function createRadioButtons(attributes, csvData) {
+    const container = d3.select("#classbutton");
+    container.selectAll("*").remove(); 
+    
+    container.append("b").text("Layer Data").append("br");
+    
+    attributes.forEach((attr, i) => {
+        container.append("input")
+            .attr("type", "radio")
+            .attr("name", "attribute")
+            .attr("value", attr)
+            .property("checked", i === 0)
+            .on("change", function () {
+                expressed = this.value;
+                console.log("Expressed changed to:", expressed);
+                const colorScale = makeColorScale(csvData);
+                recolorMap(colorScale);
+            });
+    
+        container.append("label")
+            .text(" " + attr.replace(/_/g, " "))
+            .style("margin-right", "10px");
+    
+        container.append("br");
+    });
 };

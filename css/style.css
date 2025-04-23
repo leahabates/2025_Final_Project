@@ -1,11 +1,11 @@
 /*insert style here*/
 .counties {
-    fill: #ffffff;
-    stroke: #CCC;
+    fill: #dcdbdb;
+    stroke: #fffdfd;
     stroke-width: 2px;
 }
 .tri {
-    fill: red;
+    fill: rgb(255, 0, 0);
     opacity: 0.7;
 }
 .cancer_parish{
@@ -15,4 +15,35 @@
 }
 .mississippi{
     stroke: rgb(153, 153, 226);
+}
+/* Layout with the map on the left and buttons on the right */
+#layout {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+#mapContainer {
+    width: 75vw;
+    height: 100vh;  /* Full screen height */
+}
+
+#buttonContainer {
+    width: 250px; /* Width for button container */
+    margin-left: 20px;
+    margin-top: 20px;
+}
+
+#classbutton {
+    padding: 10px;
+    font-family: sans-serif;
+    font-size: 14px;
+    background: #fff;
+    border-radius: 5px;
+}
+
+#classbutton b {
+    font-size: 16px;
+    display: block;
+    margin-bottom: 6px;
 }

@@ -1,5 +1,5 @@
 //insert code here!
-var attrArray = ["Total_pop", "white", "black", "poverty_rates", "cancer_inc_rate_per_100000"]
+var attrArray = ["Total_Pop", "white", "black", "poverty_rates", "cancer_inc_rate_per_100000"]
 
 var expressed = attrArray[0]
 
