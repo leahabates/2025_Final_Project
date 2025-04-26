@@ -5,21 +5,35 @@ var expressed = attrArray[0]
 
 window.onload = setMap;
 
-// set up map
 function setMap(){
+    //map frame dimensions
+    var width = window.innerWidth * 1,
+    height = window.innerHeight * 1;
 
-     //map frame dimensions
-     var width = window.innerWidth * 1,
-     height = window.innerHeight * 1 ;
-
- //create new svg container for the map
+    //create new svg container for the map
     var map = d3.select("#mapContainer")
          .append("svg")
          .attr("class", "map")
          .attr("width", width)
          .attr("height", height);
 
- //create Albers equal area conic projection centered on France
+    // Add group for zoom transformations
+    var g = map.append("g");
+
+    // Create zoom behavior
+    var zoom = d3.zoom()
+        .scaleExtent([0.30, 10]) // min and max zoom levels
+        .on("zoom", zoomed);
+
+    // Apply zoom behavior to the map
+    map.call(zoom);
+
+    // Zoom handler function
+    function zoomed(event) {
+        g.attr("transform", event.transform);
+    }
+
+    // Rest of your projection setup
     var projection = d3.geoAlbers()
         .center([0, 30.2])
         .rotate([91,2, 0]) 
@@ -40,7 +54,6 @@ function setMap(){
 
     Promise.all(promises).then(callback);
 
-    // callback function
     function callback(data){
         var homePriceData = data[0];
         var allParishes = data[1],
@@ -59,16 +72,60 @@ function setMap(){
         // Create color scale
         let colorScale = makeColorScale(homePriceData);
         
-        // Draw all parishes with choropleth colors
-        drawAllParishes(laParishes, map, path, colorScale);
+        // Draw all parishes with choropleth colors (using g instead of map)
+        g.selectAll(".parish")
+            .data(laParishes.features)
+            .enter()
+            .append("path")
+            .attr("class", "parish")
+            .attr("d", path)
+            .style("fill", d => {
+                return d.properties.home_price ? 
+                       colorScale(d.properties.home_price) : 
+                       "#f5f5f5";
+            })
+            .style("stroke", "#fff")
+            .style("stroke-width", "0.5px")
+            .style("opacity", 0.9);
         
-        // Highlight Cancer Alley parishes with special styling
-        highlightCancerAlley(cancerAlley, map, path);
+        // Highlight Cancer Alley parishes (using g instead of map)
+        g.selectAll(".cancer-alley")
+            .data(cancerAlley.features)
+            .enter()
+            .append("path")
+            .attr("class", "cancer-alley")
+            .attr("d", path)
+            .style("fill", "url(#caHatch)")
+            .style("stroke", "#ff0000")
+            .style("stroke-width", "2px")
+            .style("opacity", 0.7);
         
-        // Add other elements
+        // Add other elements (using g instead of map)
         setLegend(colorScale, homePriceData);
-        setRiver(river, map, path);
-        setTRI(sites, map, projection);
+        setRiver(river, g, path); // Note: need to update setRiver to use g
+
+        // ===== ADD PARISH LABELS HERE =====
+        g.selectAll(".parish-label")
+            .data(laParishes.features)
+            .enter()
+            .append("text")
+            .attr("class", "parish-label")
+            .attr("transform", function(d) {
+                var centroid = path.centroid(d);
+                return "translate(" + centroid + ")";
+            })
+            .attr("text-anchor", "middle")
+            .attr("dy", "0.35em")  // Vertical centering
+            .style("font-size", "9px")  // Slightly smaller
+            .style("font-weight", "normal")  // Not bold
+            .style("fill", "#666")  // Medium grey color
+            .style("opacity", 0.8)  // Slightly transparent
+            .style("pointer-events", "none")
+            .text(function(d) { 
+                return d.properties.NAME || d.properties.NAME_ALT;
+            });
+
+        setTRI(sites, g, projection); // Note: need to update setTRI to use g
     }
 };
 
@@ -97,12 +154,11 @@ function setBackground(la_county, map, path){
             .attr("d", path);
 };
 
-function setRiver(la_river, map, path){
-    // Convert TopoJSON to GeoJSON first
+function setRiver(la_river, g, path){ // Changed parameter from map to g
     var riverFeatures = topojson.feature(la_river, la_river.objects.LA_river).features;
     
-    var mississippi = map.selectAll(".mississippi")
-         .data(riverFeatures) // Use the converted features
+    var mississippi = g.selectAll(".mississippi") // Changed from map to g
+         .data(riverFeatures)
          .enter()
          .append("path")
          .attr("class", function (d){
@@ -110,22 +166,15 @@ function setRiver(la_river, map, path){
          })
          .attr("d", path)
          .attr("fill", "none")
-         .attr("stroke", "#1f78b4") // Add stroke color
+         .attr("stroke", "#1f78b4")
          .attr("stroke-width", 4);
 };
 
-function setTRI(tri_sites, map, projection){
-    // First convert TopoJSON to GeoJSON
+function setTRI(tri_sites, g, projection){ // Changed parameter from map to g
     var triFeatures = topojson.feature(tri_sites, tri_sites.objects.TRI_cancer_perish).features;
     
-    // Check if we have features
-    if (!triFeatures || triFeatures.length === 0) {
-        console.error("No TRI features found");
-        return;
-    }
-
-    var tri = map.selectAll(".tri")
-        .data(triFeatures)  // Use the converted features
+    var tri = g.selectAll(".tri") // Changed from map to g
+        .data(triFeatures)
         .enter()
         .append("circle")
         .attr("class", function(d){
@@ -152,11 +201,7 @@ function setTRI(tri_sites, map, projection){
 function makeColorScale(data) {
     // Your preferred colors condensed to 5 buckets
     var colorClasses = [
-        '#deebf7',  // Lightest blue
-        '#9ecae1', 
-        '#4292c6',  // Middle blue (removed #6baed6)
-        '#2171b5',
-        '#084081'   // Darkest blue
+'#ffffd4','#fed98e','#fe9929','#d95f0e','#993404'
     ];
 
     var prices = data.map(d => parseFloat(d["2024-12-31"]))
@@ -213,6 +258,36 @@ function highlightCancerAlley(cancerAlley, map, path) {
         .style("stroke-width", "2px")
         .style("opacity", 0.7);
 }
+
+// function highlightCancerAlley(cancerAlley, map, path) {
+//     // Add cross-hatch pattern definition
+//     var defs = map.append("defs");
+    
+//     // Create cross-hatch pattern
+//     defs.append("pattern")
+//         .attr("id", "caCrossHatch")
+//         .attr("patternUnits", "userSpaceOnUse")
+//         .attr("width", 8)
+//         .attr("height", 8)
+//         .append("g")
+//         .style("stroke", "#ff0000") // Red color for the hatch
+//         .style("stroke-width", 1)   // Thinner lines
+//         .html('<path d="M-1,1 l2,-2 M0,8 l8,-8 M7,9 l2,-2" />' + 
+//               '<path d="M1,-1 l-2,2 M8,0 l-8,8 M9,7 l-2,2" />');
+
+//     // Draw Cancer Alley parishes with cross-hatch border and no fill
+//     g.selectAll(".cancer-alley")
+//         .data(cancerAlley.features)
+//         .enter()
+//         .append("path")
+//         .attr("class", "cancer-alley")
+//         .attr("d", path)
+//         .style("fill", "none")  // No fill
+//         .style("stroke", "url(#caCrossHatch)")  // Use the cross-hatch pattern
+//         .style("stroke-width", "4px")  // Thicker stroke for visibility
+//         .style("opacity", 0.9);  // Slightly more opaque
+// }
+
 
 //function to recolor the map
 function recolorMap(colorScale){
