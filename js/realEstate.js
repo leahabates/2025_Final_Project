@@ -1,5 +1,5 @@
 //insert code here!
-var attrArray = ["Total_Pop", "white", "black", "poverty_rates", "cancer_inc_rate_per_100000"]
+var attrArray = ["home_price"];
 
 var expressed = attrArray[0]
 
@@ -31,81 +31,64 @@ function setMap(){
         .projection(projection);
 
     var promises = [
-        d3.csv("data/LA_layer_data.csv"),
+        d3.csv("data/home_price_20241231.csv"),
         d3.json("data/LA_county.topojson"),
         d3.json("data/cancer_alley_parishes.topojson"),
         d3.json("data/LA_river.topojson"),
-        d3.json("data/TRI_cancer_perish.topojson")
+        d3.json("data/TRI_cancer_perish.topojson")        
     ];
 
     Promise.all(promises).then(callback);
 
     // callback function
     function callback(data){
-        var csvData = data[0];
-        var county = data[1],
-            cancer_parish = data[2],
+        var homePriceData = data[0];
+        var allParishes = data[1],
+            cancerAlleyParishes = data[2],
             river = data[3],
             sites = data[4];
-        console.log(csvData)
-        //convert topojson to geojson
-        var la_county = topojson.feature(county, county.objects.LA_county),
-            la_cancer_parish = topojson.feature(cancer_parish, cancer_parish.objects.cancer_alley_parishes);
-            la_river = topojson.feature(river, river.objects.LA_river),
-            tri_sites = topojson.feature(sites, sites.objects.TRI_cancer_perish)
-
-        // check that it works
-        console.log(la_county);
-        console.log(la_cancer_parish);
-        console.log(la_river)
-        console.log(tri_sites)
-
-        la_cancer_parish.features = joinData(la_cancer_parish.features, csvData);
-        //console.log(la_cancer_parish.features[0].properties); // to verify
-         
-        // add  LA  background counties
-        setBackground(la_county, map, path)
-
-        // add cancer alley counites
-        let colorScale = makeColorScale(csvData);
-        setEnumnerationUnits(la_cancer_parish, map, path, colorScale);
-
-        setLegend(colorScale, csvData);
+    
+        // Convert to GeoJSON
+        var laParishes = topojson.feature(allParishes, allParishes.objects.LA_county);
+        var cancerAlley = topojson.feature(cancerAlleyParishes, 
+                          cancerAlleyParishes.objects.cancer_alley_parishes);
+    
+        // Join data with ALL parishes (not just cancer alley)
+        laParishes.features = joinData(laParishes.features, homePriceData);
         
-       // add mississippi
-       setRiver(la_river, map, path);
-       
-       // add TRI sites
-       setTRI(tri_sites, map, projection);
-
-       createRadioButtons(attrArray, csvData);
-  
-    };
-};
-
-function joinData(la_cancer_parish, csvData){
-    //loop through the csv to set each with the geojson region
-    for (var i = 0; i < csvData.length; i++) {
-        var csvRegion = csvData[i] //the current region
-        var csvKey = csvRegion.Parish // primary key
-
-        //loop through geojson to get the correct county
-        for (var a = 0; a < la_cancer_parish.length; a++){
-            var geojsonProps = la_cancer_parish[a].properties;
-            var geojsonKey = geojsonProps.NAME_EN;
-
-            //the keys match
-            if (geojsonKey == csvKey){
-
-                attrArray.forEach(function(attr){
-                    var val = parseFloat(csvRegion[attr].replace(/,/g, ""));
-                    geojsonProps[attr] = val;
-                });
-            }
-        }
+        // Create color scale
+        let colorScale = makeColorScale(homePriceData);
+        
+        // Draw all parishes with choropleth colors
+        drawAllParishes(laParishes, map, path, colorScale);
+        
+        // Highlight Cancer Alley parishes with special styling
+        highlightCancerAlley(cancerAlley, map, path);
+        
+        // Add other elements
+        setLegend(colorScale, homePriceData);
+        setRiver(river, map, path);
+        setTRI(sites, map, projection);
     }
-    return la_cancer_parish;
 };
+
+function joinData(parishes, homePriceData) {
+    return parishes.map(parish => {
+        var parishName = parish.properties.NAME || parish.properties.NAME;
+        var match = homePriceData.find(d => 
+            d.RegionName.includes(parishName) || 
+            parishName.includes(d.RegionName.replace(" Parish", "")) ||
+            parishName.replace("St. ", "Saint ") === d.RegionName.replace(" Parish", "")
+        );
+        
+        parish.properties.home_price = match ? 
+            parseFloat(match["2024-12-31"]) : 
+            null;
+            
+        return parish;
+    });
+}
+
 
 function setBackground(la_county, map, path){
     var counties = map.append("path")
@@ -115,76 +98,122 @@ function setBackground(la_county, map, path){
 };
 
 function setRiver(la_river, map, path){
+    // Convert TopoJSON to GeoJSON first
+    var riverFeatures = topojson.feature(la_river, la_river.objects.LA_river).features;
+    
     var mississippi = map.selectAll(".mississippi")
-             .data(la_river.features)
-             .enter()
-             .append("path")
-             .attr("class", function (d){
-                 return "mississippi " + d.properties.name;
-             })
-             .attr("d", path)
-             .attr("fill", "none")
-             .attr("stroke-width", 4)
+         .data(riverFeatures) // Use the converted features
+         .enter()
+         .append("path")
+         .attr("class", function (d){
+             return "mississippi " + d.properties.name;
+         })
+         .attr("d", path)
+         .attr("fill", "none")
+         .attr("stroke", "#1f78b4") // Add stroke color
+         .attr("stroke-width", 4);
 };
 
 function setTRI(tri_sites, map, projection){
-    var tri = map.selectAll(".tri")
-            .data(tri_sites.features)
-            .enter()
-            .append("circle")
-            .attr("class", function (d){
-                return "tri " + d.properties.FACILIT;
-            })
-            .attr("r", 3)
-             .attr ("transform", function(d){
-                var coords = projection(d.geometry.coordinates);
-                 return "translate (" + coords + ")";
-            })
-            .on("mouseover", function(event, d){
-                console.log("TRI properties:", d.properties);
-                setLabel(d.properties); // show popup
-            })
-            .on("mousemove", function(event){
-                moveLabel(event); // follow mouse
-            })
-            .on("mouseout", function(){
-                d3.select(".infolabel").remove(); // remove popup
-            });
-};
-
-function makeColorScale (data){
-    var colorClasses = ['#ffffd4','#fed98e','#fe9929','#d95f0e','#993404'];
-
-    //craete color scale generator
-    var colorScale = d3.scaleQuantile()
-        .range(colorClasses);
+    // First convert TopoJSON to GeoJSON
+    var triFeatures = topojson.feature(tri_sites, tri_sites.objects.TRI_cancer_perish).features;
     
-    //build array of all values for the expressed attribute
-    var domainArray =[]
-    for (var i=0; i<data.length; ++i){
-        var val = parseFloat(data[i][expressed]);
-        if (!isNaN(val)) domainArray.push(val);
-    };
+    // Check if we have features
+    if (!triFeatures || triFeatures.length === 0) {
+        console.error("No TRI features found");
+        return;
+    }
 
-    //assign array of expressed values as scale domain
-    colorScale.domain(domainArray);
-
-    return colorScale;
+    var tri = map.selectAll(".tri")
+        .data(triFeatures)  // Use the converted features
+        .enter()
+        .append("circle")
+        .attr("class", function(d){
+            return "tri " + (d.properties.FACILIT || d.properties.name || "unknown");
+        })
+        .attr("r", 3)
+        .attr("transform", function(d){
+            var coords = projection(d.geometry.coordinates);
+            return "translate(" + coords + ")";
+        })
+        .on("mouseover", function(event, d){
+            console.log("TRI properties:", d.properties);
+            setLabel(d.properties);
+        })
+        .on("mousemove", function(event){
+            moveLabel(event);
+        })
+        .on("mouseout", function(){
+            d3.select(".infolabel").remove();
+        });
 };
-//function to set coloring for the enumeration units
-function setEnumnerationUnits(la_cancer_parish, map, path, colorScale){
-    var cancer_parish = map.selectAll(".cancer_parish")
-        .data(la_cancer_parish.features)
+
+
+function makeColorScale(data) {
+    // Your preferred colors condensed to 5 buckets
+    var colorClasses = [
+        '#deebf7',  // Lightest blue
+        '#9ecae1', 
+        '#4292c6',  // Middle blue (removed #6baed6)
+        '#2171b5',
+        '#084081'   // Darkest blue
+    ];
+
+    var prices = data.map(d => parseFloat(d["2024-12-31"]))
+                   .filter(d => !isNaN(d));
+
+    return d3.scaleQuantize()
+        .domain(d3.extent(prices))
+        .range(colorClasses);
+}
+
+function drawAllParishes(parishes, map, path, colorScale) {
+    // Remove any existing parish paths
+    map.selectAll(".parish").remove();
+    
+    // Draw all parishes
+    map.selectAll(".parish")
+        .data(parishes.features)
         .enter()
         .append("path")
-        .attr("class", function(d){
-            return "cancer_parish regions " + d.properties.NAME_EN;
-        })
+        .attr("class", "parish")
         .attr("d", path)
-        .style("fill", function(d){
-            return colorScale(d.properties[expressed]);
+        .style("fill", d => {
+            return d.properties.home_price ? 
+                   colorScale(d.properties.home_price) : 
+                   "#f5f5f5"; // Light gray for missing data
         })
-};
+        .style("stroke", "#fff")
+        .style("stroke-width", "0.5px")
+        .style("opacity", 0.9);
+}
+
+function highlightCancerAlley(cancerAlley, map, path) {
+    // Add hatch pattern definition
+    var defs = map.append("defs");
+    defs.append("pattern")
+        .attr("id", "caHatch")
+        .attr("patternUnits", "userSpaceOnUse")
+        .attr("width", 4)
+        .attr("height", 4)
+        .append("path")
+        .attr("d", "M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2")
+        .attr("stroke", "#ff0000")
+        .attr("stroke-width", 0.5);
+
+    // Draw Cancer Alley parishes with red hatch and border
+    map.selectAll(".cancer-alley")
+        .data(cancerAlley.features)
+        .enter()
+        .append("path")
+        .attr("class", "cancer-alley")
+        .attr("d", path)
+        .style("fill", "url(#caHatch)")
+        .style("stroke", "#ff0000")
+        .style("stroke-width", "2px")
+        .style("opacity", 0.7);
+}
+
 //function to recolor the map
 function recolorMap(colorScale){
     d3.selectAll(".cancer_parish")
@@ -192,101 +221,84 @@ function recolorMap(colorScale){
         .duration(500)
         .style("fill", function(d){
             const val = d.properties[expressed];
-            return colorScale(val) || "#ccc"; // Fallback if data is missing
+            return colorScale(val) || "#ccc";
         });
-    };
-function createRadioButtons(attributes, csvData) {
+};
+
+function createRadioButtons(attributes, homePriceData) {
     const container = d3.select("#classbutton");
     container.selectAll("*").remove(); 
     
-    container.append("b").text("Layer Data").append("br");
+    container.append("b").text("Home Price Data").append("br");
     
-    attributes.forEach((attr, i) => {
-        container.append("input")
-            .attr("type", "radio")
-            .attr("name", "attribute")
-            .attr("value", attr)
-            .property("checked", i === 0)
-            .on("change", function () {
-                expressed = this.value;
-                console.log("Expressed changed to:", expressed);
-                const colorScale = makeColorScale(csvData);
-                recolorMap(colorScale);
-                
-                d3.select("#legendContainer").selectAll("svg").remove();
-                setLegend(colorScale, csvData);
-            });
-    
-        container.append("label")
-            .text(" " + attr.replace(/_/g, " "))
-            .style("margin-right", "10px");
-    
-        container.append("br");
-    });
-};
-function setLegend(colorScale, csvData){
-    // define the legen size and position
-    var legendWidth = window.innerWidth * 0.25,
-        legendHeight = window.innerHeight *.1;
-
-    // get map height dynamically
-    var mapHeight = d3.select(".map").node().getBoundingClientRect().height;
-
-    // Calculate the position from the bottom
-    var bottomMargin = mapHeight;
-
-    //create the SVG for the legend
-    var legend = d3.select("#legendContainer")
-        .append("svg")
-        .attr("class", "legend")
-        .attr("width", legendWidth)
-        .attr("height", legendHeight + 30)
-        
-
-    // define the color classes (range) and labels
-    var colorClasses = colorScale.range();
-    var classLabels = [];
-
-    for (var i = 0; i < colorClasses.length; i++) {
-        //Get the range for each color class 
-        var minVal = colorScale.invertExtent(colorClasses[i])[0];
-        var maxVal = colorScale.invertExtent(colorClasses[i])[1];
-        classLabels.push(`${Math.round(minVal)} - ${Math.round(maxVal)}`);
-    }
-
-    legend.append("text")
-        .attr("class", "legendTitle")
-        .attr("x", 5)
-        .attr("y", 14)  // Adjust Y positioning
-        .style("font-size", "16px") // Make the title larger
+    // Since we only have one attribute now, we might just show a label
+    container.append("label")
+        .text("Median Home Prices (2024)")
         .style("font-weight", "bold")
-        .style("fill", "#FFF") // Ensure it's white and visible
-        .text("Legend: " + expressed);
-
-    // Create a group for the legend items
-    var legendItem = legend.selectAll(".legendItem")
-        .data(colorClasses)
-        .enter()
-        .append("g")
-        .attr("class", "legendItem")
-        .attr("transform", function (d, i){
-            return "translate(0," + (i * 20 ) + ")";
-        });
-
-    //create a rectange for each color class
-    legendItem.append("rect")
-        .attr("width", legendWidth / colorClasses.length)
-        .attr("height", 15)
-        .attr("y", 20)
-        .style("fill", function (d){ return d; });
-
-    //add labels
-    legendItem.append("text")
-        .attr("x", (legendWidth / colorClasses.length))
-        .attr("y", 30)
-        .attr("text-anchor","start")
-        .text(function(d, i){ return classLabels[i]; });
+        .style("margin-right", "10px");
 };
+
+function setLegend(colorScale, homePriceData, options = {}) {
+    // Default options that you can override
+    const defaults = {
+        width: 300,
+        height: 150,
+        itemHeight: 25,
+        fontSize: 12,
+        title: "Home Prices (2024)",
+        titleFontSize: 14,
+        margins: { top: 20, right: 10, bottom: 10, left: 10 }
+    };
+    
+    const config = { ...defaults, ...options };
+    
+    // Clear previous legend
+    const legend = d3.select("#legendContainer")
+        .html("")
+        .append("svg")
+        .attr("width", config.width)
+        .attr("height", config.height);
+
+    // Add title
+    legend.append("text")
+        .attr("x", config.margins.left)
+        .attr("y", config.margins.top)
+        .text(config.title)
+        .style("font-size", config.titleFontSize + "px")
+        .style("font-weight", "bold");
+
+    // Create legend items
+    const thresholds = colorScale.thresholds();
+    const colors = colorScale.range();
+
+    colors.forEach((color, i) => {
+        const yPos = config.margins.top + 20 + (i * config.itemHeight);
+        
+        // Color swatch
+        legend.append("rect")
+            .attr("x", config.margins.left)
+            .attr("y", yPos - 15)
+            .attr("width", 20)
+            .attr("height", 20)
+            .attr("fill", color);
+
+        // Text label
+        const minVal = i === 0 
+            ? Math.floor(colorScale.domain()[0])
+            : Math.ceil(thresholds[i-1]);
+            
+        const maxVal = i === colors.length - 1
+            ? Math.ceil(colorScale.domain()[1])
+            : Math.floor(thresholds[i]);
+
+        legend.append("text")
+            .attr("x", config.margins.left + 30)
+            .attr("y", yPos)
+            .text(`$${minVal.toLocaleString()} - $${maxVal.toLocaleString()}`)
+            .style("font-size", config.fontSize + "px");
+    });
+}
+
 function setLabel(props){   
         // Create label content based on TRI properties
     var labelContent = `
