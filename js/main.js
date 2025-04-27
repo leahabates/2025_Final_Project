@@ -1,4 +1,5 @@
 //insert code here!
+//insert code here!
 var attrArray = ["Total_Pop", "white", "black", "poverty_rates", "cancer_inc_rate_per_100000"]
 
 var expressed = attrArray[0]
@@ -219,74 +220,92 @@ function createRadioButtons(attributes, csvData) {
     
         container.append("label")
             .text(" " + attr.replace(/_/g, " "))
-            .style("margin-right", "10px");
+            .style("margin-right", "10px")
+            .style("margin-left", "5px")
+            .style("color", "#000")  // optional if you're using a dark background
+            .style("font-size", "14px");
     
         container.append("br");
     });
 };
 function setLegend(colorScale, csvData){
-    // define the legen size and position
     var legendWidth = window.innerWidth * 0.25,
-        legendHeight = window.innerHeight *.1;
+        legendHeight = window.innerHeight * 0.15;
 
-    // get map height dynamically
     var mapHeight = d3.select(".map").node().getBoundingClientRect().height;
 
-    // Calculate the position from the bottom
-    var bottomMargin = mapHeight;
-
-    //create the SVG for the legend
     var legend = d3.select("#legendContainer")
         .append("svg")
         .attr("class", "legend")
         .attr("width", legendWidth)
-        .attr("height", legendHeight + 30)
-        
+        .attr("height", legendHeight+ 40); // Increased for titles and TRI dot
 
-    // define the color classes (range) and labels
     var colorClasses = colorScale.range();
     var classLabels = [];
 
     for (var i = 0; i < colorClasses.length; i++) {
-        //Get the range for each color class 
         var minVal = colorScale.invertExtent(colorClasses[i])[0];
         var maxVal = colorScale.invertExtent(colorClasses[i])[1];
         classLabels.push(`${Math.round(minVal)} - ${Math.round(maxVal)}`);
     }
 
+    // --- Add main legend title ---
     legend.append("text")
-        .attr("class", "legendTitle")
+        .attr("class", "legendMainTitle")
         .attr("x", 5)
-        .attr("y", 14)  // Adjust Y positioning
-        .style("font-size", "16px") // Make the title larger
+        .attr("y", 20)
+        .style("font-size", "18px")
         .style("font-weight", "bold")
-        .style("fill", "#FFF") // Ensure it's white and visible
-        .text("Legend: " + expressed);
+        .style("fill", "#000")
+        .text("Legend");
 
-    // Create a group for the legend items
+    // --- Add subtitle showing the selected attribute ---
+    legend.append("text")
+        .attr("class", "legendSubtitle")
+        .attr("x", 5)
+        .attr("y", 40)
+        .style("font-size", "14px")
+        .style("fill", "#000")
+        .text(expressed.replace(/_/g, " "));
+
+    // --- Shift color boxes down to leave room for titles ---
     var legendItem = legend.selectAll(".legendItem")
         .data(colorClasses)
         .enter()
         .append("g")
         .attr("class", "legendItem")
         .attr("transform", function (d, i){
-            return "translate(0," + (i * 20 ) + ")";
+            return "translate(0," + (i * 20 + 50) + ")"; // Shifted down
         });
 
-    //create a rectange for each color class
     legendItem.append("rect")
         .attr("width", legendWidth / colorClasses.length)
         .attr("height", 15)
-        .attr("y", 20)
+        .attr("y", 0)
         .style("fill", function (d){ return d; });
 
-    //add labels
     legendItem.append("text")
-        .attr("x", (legendWidth / colorClasses.length))
-        .attr("y", 30)
+        .attr("x", (legendWidth / colorClasses.length)+10)
+        .attr("y", 12)
         .attr("text-anchor","start")
+        .style("fill", "#000")
         .text(function(d, i){ return classLabels[i]; });
+
+    // --- TRI dot legend ---
+    legend.append("circle")
+        .attr("cx", 10)
+        .attr("cy", legendHeight + 20)
+        .attr("r", 4)
+        .style("fill", "red");
+
+    legend.append("text")
+        .attr("x", 25)
+        .attr("y", legendHeight + 24)
+        .style("fill", "#000")
+        .style("font-size", "14px")
+        .text("TRI Facility Site");
 };
+
 function setLabel(props){   
         // Create label content based on TRI properties
     var labelContent = `

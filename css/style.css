@@ -97,3 +97,57 @@
 .infolabel .labelname {
     display: none; /* optional – hides redundant name */
 }
+/* Full-screen background section */
+#hero-section {
+    position: relative;
+    width: 100%;
+    height: 100vh; /* This makes the section take up the full viewport height */
+    background-image: url('../img/602A0373-Editlead.jpg'); /* Replace with the actual image URL */
+    background-size: cover; /* Ensures the image covers the whole section */
+    background-position: center; /* Centers the image */
+    color: white; /* Text color */
+    text-align: center; /* Centers the text horizontally */
+    display: flex;
+    justify-content: center; /* Centers the text vertically */
+    align-items: center; /* Centers the text vertically */
+    flex-direction: column; /* Arranges text in a column layout (title and subtitle) */
+    z-index: 1; /* Ensures this section is on top of other sections */
+}
+
+/* Title Styling */
+#hero-section h1 {
+    font-size: 3rem; /* Large font size for the title */
+    font-weight: bold; /* Makes the title bold */
+    margin: 0; /* Removes any default margins */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Adds a subtle shadow to the text for better visibility on images */
+}
+
+/* Subtitle Styling */
+#hero-section p {
+    font-size: 1.2rem; 
+    margin-top: 10px; 
+    opacity: 0.8; 
+    
+}
+/* Content section styles */
+#content {
+    width: 90%; 
+    padding: 40px 20px;
+    margin: 0 auto; 
+    text-align: left; 
+    line-height: 1.6; 
+}
+
+/* Section titles or any specific heading inside the content */
+#content h2 {
+    font-size: 2.5rem; 
+    margin-bottom: 20px; 
+}
+
+/* Paragraph text styling inside the content */
+#content p {
+    font-size: 1.2rem;
+    margin-bottom: 20px; 
+    opacity: 0.9; 
+    max-width: 100%; 
+}
