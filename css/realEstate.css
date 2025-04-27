@@ -147,33 +147,32 @@ pattern path {
 }
 
 /* River style */
-.mississippi {
-    pointer-events: none; /* Double protection against hover */
+/* .mississippi {
+    pointer-events: none; 
     stroke: #1f78b4;
     stroke-width: 4px;
     fill: none;
-}
+} */
 
-/* Make sure base elements are visible */
-.mississippi:not(.faded) {
-    opacity: 1;
+/* Base styles for river */
+.mississippi {
+    pointer-events: none;
     stroke: #1f78b4;
+    stroke-width: 4px;
+    fill: none;
+    opacity: 1;
 }
 
-/* TRI sites style */
+/* TRI sites should never fade */
 .tri-site {
-    pointer-events: none; /* Double protection against hover */
+    pointer-events: none;
     fill: red;
-    opacity: 0.7;
+    opacity: 1.0 !important; /* Force constant opacity */
 }
 
-.tri-site:not(.faded) {
-    opacity: 0.7;
-    fill: red;
-}
 
 /* Faded state for all elements */
-.parish.faded, .mississippi.faded, .tri-site.faded {
+.parish.faded, .mississippi.faded {
     opacity: 0.3;
     transition: opacity 0.3s ease;
 }

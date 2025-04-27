@@ -47,11 +47,7 @@ function setMap() {
         d3.json("data/LA_river.topojson"),
         d3.json("data/TRI_cancer_perish.topojson")
     ];
-
-    // Promise.all(promises).then(function(data) {
-    //     var homePriceData = data[0];
-    //     var allParishes = topojson.feature(data[1], data[1].objects.LA_county);
-    
+   
     Promise.all(promises).then(function(data) {
         var homePriceData = data[0];
         var allParishes = topojson.feature(data[1], data[1].objects.LA_county);
@@ -112,19 +108,19 @@ function setMap() {
                         )
                         .classed("faded", false);
                     
-                    // Fade all other parishes
-                    g.selectAll(".parish")
+                    // Fade all other parishes and the river (but not TRI sites)
+                    g.selectAll(".parish, .mississippi")
                         .classed("faded", p => 
                             p !== d && // Not the hovered parish
-                            !(!p.properties.isCancerAlley && // Not a highlighted match
-                              p.properties.home_price >= range[0] && 
-                              p.properties.home_price <= range[1])
+                            !(!p.properties?.isCancerAlley && // Not a highlighted match
+                              p.properties?.home_price >= range[0] && 
+                              p.properties?.home_price <= range[1])
                         );
                 }
             })
             .on("mouseout", function() {
-                // Reset all parishes
-                g.selectAll(".parish")
+                // Reset all elements except TRI sites
+                g.selectAll(".parish, .mississippi")
                     .classed("highlighted", false)
                     .classed("faded", false);
             });
@@ -141,8 +137,8 @@ function setMap() {
             .attr("fill", "none")
             .attr("stroke", "#1f78b4")
             .attr("stroke-width", 4)
-            .style("pointer-events", "none"); // Makes it ignore hover
-        
+            .style("pointer-events", "none");
+
         // Add TRI sites (transparent to hover)
         g.selectAll(".tri-site")
             .data(topojson.feature(triSites, triSites.objects.TRI_cancer_perish).features)
@@ -156,7 +152,7 @@ function setMap() {
             })
             .attr("fill", "red")
             .attr("opacity", 0.7)
-            .style("pointer-events", "none"); // Makes it ignore hover 
+            .style("pointer-events", "none");
     });
 
 }
@@ -194,26 +190,64 @@ function callback(data) {
         .style("fill", d => colorScale(d.properties.home_price))
         .style("stroke", "#fff")
         .style("stroke-width", "0.5px")
+        // .on("mouseover", function(event, d) {
+        //     if (d.properties.isCancerAlley) {
+        //         const hoveredPrice = d.properties.home_price;
+        //         const range = [hoveredPrice * 0.9, hoveredPrice * 1.1];
+                
+        //         g.selectAll(".parish")
+        //             .classed("highlighted", p => 
+        //                 !p.properties.isCancerAlley && 
+        //                 p.properties.home_price >= range[0] && 
+        //                 p.properties.home_price <= range[1]
+        //             )
+        //             .classed("faded", p => 
+        //                 !p.properties.isCancerAlley && 
+        //                 (p.properties.home_price < range[0] || 
+        //                  p.properties.home_price > range[1])
+        //             );
+        //     }
+        // })
+        // .on("mouseout", function() {
+        //     g.selectAll(".parish")
+        //         .classed("highlighted", false)
+        //         .classed("faded", false);
+        // });
         .on("mouseover", function(event, d) {
             if (d.properties.isCancerAlley) {
                 const hoveredPrice = d.properties.home_price;
                 const range = [hoveredPrice * 0.9, hoveredPrice * 1.1];
                 
-                g.selectAll(".parish")
+                // Keep this Cancer Alley parish looking normal (red border)
+                d3.select(this)
+                    .classed("faded", false);
+                
+                // Highlight matching non-Cancer Alley parishes with black border
+                g.selectAll(".parish:not(.cancer-alley)")
                     .classed("highlighted", p => 
-                        !p.properties.isCancerAlley && 
                         p.properties.home_price >= range[0] && 
                         p.properties.home_price <= range[1]
                     )
-                    .classed("faded", p => 
-                        !p.properties.isCancerAlley && 
-                        (p.properties.home_price < range[0] || 
-                         p.properties.home_price > range[1])
-                    );
+                    .classed("faded", false);
+                
+                // Fade all other parishes, TRI sites, and river
+                g.selectAll(".parish, .mississippi, .tri-site")
+                    .classed("faded", p => {
+                        // For parishes
+                        if (p.properties) {
+                            return p !== d && // Not the hovered parish
+                                   !(!p.properties.isCancerAlley && // Not a highlighted match
+                                     p.properties.home_price >= range[0] && 
+                                     p.properties.home_price <= range[1]);
+                        }
+                        // For river and TRI sites (always fade them)
+                        return true;
+                    });
             }
         })
         .on("mouseout", function() {
-            g.selectAll(".parish")
+            // Reset all elements
+            g.selectAll(".parish, .mississippi, .tri-site")
                 .classed("highlighted", false)
                 .classed("faded", false);
         });
