@@ -19,20 +19,25 @@
 /* Layout with the map on the left and buttons on the right */
 #layout {
     display: flex;
-    justify-content: space-between;
+    justify-content: center; /* Centers both children horizontally */
     align-items: flex-start;
+    gap: 20px; /* Optional for spacing between map and button container */
 }
 
 #mapContainer {
-    width: 75vw;
-    height: 100vh;  /* Full screen height */
+    width: 75vw;  /* Makes sure it's responsive */
+    max-width: 1200px; /* Optionally, limit max width */
+    height: 100vh;
+    flex-shrink: 0; /* Prevents shrinking */
 }
 
 #buttonContainer {
-    width: 250px; /* Width for button container */
+    width: 250px;
     margin-left: 20px;
     margin-top: 20px;
+    flex-shrink: 0; /* Prevents shrinking */
 }
+
 
 #classbutton {
     padding: 10px;
@@ -59,7 +64,6 @@
     fill: #000; /* Black text for readability */
     font-size: 12px;
     dominant-baseline: middle;
-    alignment-baseline: middle;
 }
 
 #legendContainer .legendTitle {
@@ -101,18 +105,20 @@
 #hero-section {
     position: relative;
     width: 100%;
-    height: 100vh; /* This makes the section take up the full viewport height */
-    background-image: url('../img/602A0373-Editlead.jpg'); /* Replace with the actual image URL */
-    background-size: cover; /* Ensures the image covers the whole section */
-    background-position: center; /* Centers the image */
-    color: white; /* Text color */
-    text-align: center; /* Centers the text horizontally */
+    height: 100vh;
+    background-image: url('../img/602A0373-Editlead.jpg');
+    background-size: cover;
+    background-position: center;
+    color: white;
+    text-align: center;
     display: flex;
-    justify-content: center; /* Centers the text vertically */
-    align-items: center; /* Centers the text vertically */
-    flex-direction: column; /* Arranges text in a column layout (title and subtitle) */
-    z-index: 1; /* Ensures this section is on top of other sections */
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 1;
+    padding: 20px; /* Optional padding for spacing */
 }
+
 
 /* Title Styling */
 #hero-section h1 {

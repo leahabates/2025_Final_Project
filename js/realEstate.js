@@ -7,8 +7,9 @@ window.onload = setMap;
 
 function setMap() {
     // Map frame dimensions
-    var width = window.innerWidth * 1,
-        height = window.innerHeight * 1;
+    var container = document.getElementById("mapContainer")
+    var width = container.clientWidth,
+        height = container.clientHeight;
 
     // Create SVG container
     var map = d3.select("#mapContainer")
@@ -45,7 +46,8 @@ function setMap() {
         d3.csv("data/home_price_20241231.csv"),
         d3.json("data/LA_county.topojson"),
         d3.json("data/LA_river.topojson"),
-        d3.json("data/TRI_cancer_perish.topojson")
+        d3.json("data/TRI_cancer_perish.topojson"),
+        d3.json("data/states.topojson")
     ];
    
     Promise.all(promises).then(function(data) {
@@ -53,6 +55,8 @@ function setMap() {
         var allParishes = topojson.feature(data[1], data[1].objects.LA_county);
         var laRiver = data[2];
         var triSites = data[3];
+        var background_states = data[4];
+
 
         // Define Cancer Alley parishes manually
         const cancerAlleyParishes = [
@@ -61,6 +65,8 @@ function setMap() {
             'Saint James', 'Iberville', 'East Baton Rouge', 'West Baton Rouge'
         ];
 
+        setStates(background_states, g, path);
+        
         // Join data and mark Cancer Alley parishes (corrected syntax)
         allParishes.features = allParishes.features.map(parish => {
             const match = homePriceData.find(d => 
@@ -155,6 +161,7 @@ function setMap() {
             .style("pointer-events", "none");
     });
 
+
 }
 
 
@@ -179,6 +186,7 @@ function callback(data) {
 
     // Create color scale
     const colorScale = makeColorScale(homePriceData);
+
 
     // Draw all parishes
     g.selectAll(".parish")
@@ -324,6 +332,17 @@ function setTRI(tri_sites, g, projection){ // Changed parameter from map to g
         // .on("mouseout", function(){
         //     d3.select(".infolabel").remove();
         // });
+};
+
+function setStates(background_states, g, path) {
+    var stateFeatures = topojson.feature(background_states, background_states.objects.states).features;
+
+    g.selectAll(".states")
+        .data(stateFeatures) 
+        .enter()
+        .append("path") 
+        .attr("class", "states")
+        .attr("d", path); 
 };
 
 

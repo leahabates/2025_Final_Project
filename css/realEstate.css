@@ -41,7 +41,7 @@ pattern path {
 
 /* Base map styles */
 .map {
-    background-color: #f9f9f9;
+    background-color: #ffffff;
     display: block;
 }
 
@@ -177,3 +177,78 @@ pattern path {
     transition: opacity 0.3s ease;
 }
 
+/* Map Container - This will take up the full available space */
+#mapContainer {
+    width: 100%;
+    height: 100vh; 
+    position: relative; 
+    overflow: hidden; 
+}
+
+#legendContainer {
+    margin-top: 5%;
+    right: 7%;
+    padding: 10px;
+    background: #fff;
+    position: absolute; 
+ 
+}
+
+#legendContainer text {
+    fill: #000; 
+    font-size: 12px;
+    dominant-baseline: middle;
+}
+
+/* Base map styling */
+#mapContainer svg {
+    width: 100%;
+    height: 100%; 
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* Layout of content */
+#layout {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    width: 100%;
+    height: 90%;
+}
+
+/* Info label - Keep this in place with z-index to ensure it's on top */
+.infolabel {
+    position: absolute;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Optional: Adjust content and padding for better structure */
+#content {
+    width: 90%;
+    padding: 40px 20px;
+    margin: 0 auto;
+    text-align: left;
+    line-height: 1.6;
+}
+
+/* Adjust heading and paragraphs inside the content */
+#content h2 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+#content p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    opacity: 0.9;
+    max-width: 100%;
+}
+.states {
+    fill: #f0f0f0;
+    stroke: #999;
+    stroke-width: 0.5px;
+    pointer-events: none; /* Non-interactive background */
+}
