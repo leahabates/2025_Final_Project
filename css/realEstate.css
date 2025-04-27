@@ -1,137 +1,143 @@
-/*insert style here*/
-/* .counties {
-    fill: #dcdbdb;
-    stroke: #fffdfd;
-    stroke-width: 2px;
+/* Remove this overly broad rule - it can cause unexpected behavior */
+/* svg * {
+    pointer-events: all !important; 
 } */
+
+/* Ensure proper stacking */
+.map-group path {
+    vector-effect: non-scaling-stroke;
+}
+
+/* Make sure patterns work */
+pattern path {
+    stroke: #ff0000;
+    stroke-width: 0.5;
+}
+
+/* Hide hit areas but keep them interactive */
+.ca-hit-area {
+    fill: transparent !important;
+    stroke: none !important;
+    pointer-events: all !important;
+}
+
+/* Ensure interactive layer is on top */
+.interactive-layer {
+    pointer-events: all;
+    z-index: 100;
+}
+
+/* Add to your CSS */
+.debug-hover {
+    stroke: cyan !important;
+    stroke-width: 4px !important;
+    animation: pulse 1s infinite;
+}
+@keyframes pulse {
+    0% { opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
+}
+
+/* Base map styles */
+.map {
+    background-color: #f9f9f9;
+    display: block;
+}
 
 .counties {
     fill: #f0f0f0;
     stroke: #999;
     stroke-width: 0.5px;
+    pointer-events: none; /* Non-interactive background */
 }
 
-.cancer_parish {
+/* Regular parishes */
+.parish {
+    /* fill: #dcdcdc; */
     stroke: #fff;
     stroke-width: 0.5px;
+    transition: all 0.3s ease;
+    pointer-events: all;
+    /* vector-effect: non-scaling-stroke; */
 }
 
-.map {
-    background-color: #f9f9f9;
-}
-
-
-.parish {
-    transition: fill 0.3s;
-}
-
-.parish:hover {
-    stroke: #333 !important;
-    stroke-width: 1.5px !important;
-}
-
+/* Cancer Alley parishes */
 .cancer-alley {
-    pointer-events: none; /* Allows hovering underlying parish */
+    pointer-events: all !important;  /* Must be clickable */
+    stroke: #ff0000 !important;
+    stroke-width: 2px !important;
+    fill: url(#caHatch) !important;
+    opacity: 0.7;
 }
 
-#legendContainer {
-    background: rgba(255,255,255,0.8);
-    padding: 10px;
-    border-radius: 5px;
+/* Hover states */
+.parish.highlighted {
+    stroke: #000 !important;
+    stroke-width: 2px !important;
+    /* opacity: 1 !important; */
+    filter: brightness(1.2);
 }
 
+.parish.faded {
+    opacity: 0.3;
+}
 
+.cancer-alley:hover {
+    stroke: yellow;
+    stroke-width: 3px;
+    opacity: 0.9;
+}
+
+/* Debug styles - remove after testing */
+.debug-ca-hover {
+    outline: 2px solid lime !important;
+    stroke: cyan !important;
+}
+
+/* TRI sites */
 .tri {
     fill: rgb(255, 0, 0);
     opacity: 0.7;
+    z-index: 3; /* Above parishes */
+    pointer-events: all;
 }
-/* .cancer_parish{
-    fill: rgba(164, 164, 164, 0.632);
-    stroke: #FFF;
-    stroke-width: 2;
+
+/* Layout */
+/* #mapContainer {
+    width: 75vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
 } */
-.mississippi{
-    stroke: rgb(153, 153, 226);
+
+/* Ensure the SVG fills its container */
+#mapContainer svg {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
 }
-/* Layout with the map on the left and buttons on the right */
+
+
 #layout {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
 }
 
-#mapContainer {
-    width: 75vw;
-    height: 100vh;  /* Full screen height */
-}
-
-#buttonContainer {
-    width: 250px; /* Width for button container */
-    margin-left: 20px;
-    margin-top: 20px;
-}
-
-#classbutton {
+/* Legend and controls */
+#legendContainer, #buttonContainer {
+    background: rgba(255,255,255,0.8);
     padding: 10px;
-    font-family: sans-serif;
-    font-size: 14px;
-    background: #fff;
     border-radius: 5px;
+    z-index: 100;
 }
 
-#classbutton b {
-    font-size: 16px;
-    display: block;
-    margin-bottom: 6px;
-}
-#legendContainer {
-    margin-top: 15px;
-    padding: 10px;
-    background: #fff;
-    border-radius: 5px;
-    font-family: sans-serif;
-}
-
-#legendContainer text {
-    fill: #000; /* Black text for readability */
-    font-size: 12px;
-    dominant-baseline: middle;
-    alignment-baseline: middle;
-}
-
-#legendContainer .legendTitle {
-    font-size: 14px;
-    font-weight: bold;
-    margin-bottom: 6px;
-}
+/* Info label */
 .infolabel {
     position: absolute;
     z-index: 1000;
-    background-color: rgba(255, 255, 255, 0.95); /* dark background */
-    color: #000000; /* white text */
-    padding: 12px 16px;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-size: 14px;
-    line-height: 1.4;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    pointer-events: none;
-    max-width: 260px;
+    pointer-events: none; /* Shouldn't block map interactions */
 }
-
-.infolabel h2 {
-    font-size: 16px;
-    margin: 0 0 6px;
-    padding: 0;
-    font-weight: 600;
-    color: #000000; /* optional accent color */
-}
-
-.infolabel b {
-    font-weight: 500;
-    color: #000000; /* softer bold */
-}
-
-.infolabel .labelname {
-    display: none; /* optional – hides redundant name */
-}
-

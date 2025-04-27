@@ -5,129 +5,199 @@ var expressed = attrArray[0]
 
 window.onload = setMap;
 
-function setMap(){
-    //map frame dimensions
+function setMap() {
+    // Map frame dimensions
     var width = window.innerWidth * 1,
-    height = window.innerHeight * 1;
+        height = window.innerHeight * 1;
 
-    //create new svg container for the map
+    // Create SVG container
     var map = d3.select("#mapContainer")
-         .append("svg")
-         .attr("class", "map")
-         .attr("width", width)
-         .attr("height", height);
+        .append("svg")
+        .attr("class", "map")
+        .attr("width", width)
+        .attr("height", height);
 
     // Add group for zoom transformations
-    var g = map.append("g");
+    var g = map.append("g")
+        .attr("class", "map-group");
 
-    // Create zoom behavior
-    var zoom = d3.zoom()
-        .scaleExtent([0.30, 10]) // min and max zoom levels
-        .on("zoom", zoomed);
-
-    // Apply zoom behavior to the map
-    map.call(zoom);
-
-    // Zoom handler function
-    function zoomed(event) {
-        g.attr("transform", event.transform);
-    }
-
-    // Rest of your projection setup
+    // Set up projection
     var projection = d3.geoAlbers()
         .center([0, 30.2])
-        .rotate([91,2, 0]) 
+        .rotate([91, 2, 0])
         .parallels([29.5, 30.5])
         .scale(27500)
-        .translate([width / 2 - 400 , height / 2 + 800]);
+        .translate([width / 2 - 400, height / 2 + 800]);
 
     var path = d3.geoPath()
         .projection(projection);
 
+    // Set up zoom behavior
+    var zoom = d3.zoom()
+        .scaleExtent([0.30, 10])
+        .on("zoom", function(event) {
+            g.attr("transform", event.transform);
+        });
+    map.call(zoom);
+
+    // Load data
     var promises = [
         d3.csv("data/home_price_20241231.csv"),
-        d3.json("data/LA_county.topojson"),
-        d3.json("data/cancer_alley_parishes.topojson"),
-        d3.json("data/LA_river.topojson"),
-        d3.json("data/TRI_cancer_perish.topojson")        
+        d3.json("data/LA_county.topojson")
     ];
 
-    Promise.all(promises).then(callback);
-
-    function callback(data){
+    Promise.all(promises).then(function(data) {
         var homePriceData = data[0];
-        var allParishes = data[1],
-            cancerAlleyParishes = data[2],
-            river = data[3],
-            sites = data[4];
-    
-        // Convert to GeoJSON
-        var laParishes = topojson.feature(allParishes, allParishes.objects.LA_county);
-        var cancerAlley = topojson.feature(cancerAlleyParishes, 
-                          cancerAlleyParishes.objects.cancer_alley_parishes);
-    
-        // Join data with ALL parishes (not just cancer alley)
-        laParishes.features = joinData(laParishes.features, homePriceData);
-        
+        var allParishes = topojson.feature(data[1], data[1].objects.LA_county);
+
+        // Define Cancer Alley parishes manually
+        const cancerAlleyParishes = [
+            'Jefferson', 'Plaquemines', 'Saint Bernard', 'Orleans',
+            'Saint Charles', 'Saint John the Baptist', 'Ascension',
+            'Saint James', 'Iberville', 'East Baton Rouge', 'West Baton Rouge'
+        ];
+
+        // Join data and mark Cancer Alley parishes (corrected syntax)
+        allParishes.features = allParishes.features.map(parish => {
+            const match = homePriceData.find(d => 
+                d.RegionName.includes(parish.properties.NAME) || 
+                parish.properties.NAME.includes(d.RegionName.replace(" Parish", "")) ||
+                parish.properties.NAME.replace("St. ", "Saint ") === d.RegionName.replace(" Parish", "")
+            );
+            
+            return {
+                ...parish,
+                properties: {
+                    ...parish.properties,
+                    home_price: match ? parseFloat(match["2024-12-31"]) : null,
+                    isCancerAlley: cancerAlleyParishes.includes(parish.properties.NAME)
+                }
+            };
+        });
+
         // Create color scale
-        let colorScale = makeColorScale(homePriceData);
-        
-        // Draw all parishes with choropleth colors (using g instead of map)
+        const colorScale = makeColorScale(homePriceData);
+
+        // Draw all parishes
         g.selectAll(".parish")
-            .data(laParishes.features)
+            .data(allParishes.features)
             .enter()
             .append("path")
-            .attr("class", "parish")
+            .attr("class", d => `parish ${d.properties.isCancerAlley ? 'cancer-alley' : ''}`)
             .attr("d", path)
-            .style("fill", d => {
-                return d.properties.home_price ? 
-                       colorScale(d.properties.home_price) : 
-                       "#f5f5f5";
-            })
+            .style("fill", d => d.properties.home_price ? colorScale(d.properties.home_price) : "#f5f5f5")
             .style("stroke", "#fff")
             .style("stroke-width", "0.5px")
-            .style("opacity", 0.9);
-        
-        // Highlight Cancer Alley parishes (using g instead of map)
-        g.selectAll(".cancer-alley")
-            .data(cancerAlley.features)
-            .enter()
-            .append("path")
-            .attr("class", "cancer-alley")
-            .attr("d", path)
-            .style("fill", "url(#caHatch)")
-            .style("stroke", "#ff0000")
-            .style("stroke-width", "2px")
-            .style("opacity", 0.7);
-        
-        // Add other elements (using g instead of map)
-        setLegend(colorScale, homePriceData);
-        setRiver(river, g, path); // Note: need to update setRiver to use g
-
-        // ===== ADD PARISH LABELS HERE =====
-        g.selectAll(".parish-label")
-            .data(laParishes.features)
-            .enter()
-            .append("text")
-            .attr("class", "parish-label")
-            .attr("transform", function(d) {
-                var centroid = path.centroid(d);
-                return "translate(" + centroid + ")";
+            .on("mouseover", function(event, d) {
+                if (d.properties.isCancerAlley) {
+                    const hoveredPrice = d.properties.home_price;
+                    const range = [hoveredPrice * 0.9, hoveredPrice * 1.1];
+                    
+                    g.selectAll(".parish")
+                        .classed("highlighted", p => 
+                            !p.properties.isCancerAlley && 
+                            p.properties.home_price >= range[0] && 
+                            p.properties.home_price <= range[1]
+                        )
+                        .classed("faded", p => 
+                            !p.properties.isCancerAlley && 
+                            (p.properties.home_price < range[0] || 
+                             p.properties.home_price > range[1])
+                        );
+                }
             })
-            .attr("text-anchor", "middle")
-            .attr("dy", "0.35em")  // Vertical centering
-            .style("font-size", "9px")  // Slightly smaller
-            .style("font-weight", "normal")  // Not bold
-            .style("fill", "#666")  // Medium grey color
-            .style("opacity", 0.8)  // Slightly transparent
-            .style("pointer-events", "none")
-            .text(function(d) { 
-                return d.properties.NAME || d.properties.NAME_ALT;
+            .on("mouseout", function() {
+                g.selectAll(".parish")
+                    .classed("highlighted", false)
+                    .classed("faded", false);
             });
 
-        setTRI(sites, g, projection); // Note: need to update setTRI to use g
-    }
-};
+        // Style Cancer Alley parishes
+        g.selectAll(".cancer-alley")
+            .style("fill", "url(#caHatch)")
+            .style("stroke", "red")
+            .style("stroke-width", "2px")
+            .style("opacity", 0.7);
+
+        // Add pattern definition
+        var defs = map.append("defs");
+        defs.append("pattern")
+            .attr("id", "caHatch")
+            .attr("patternUnits", "userSpaceOnUse")
+            .attr("width", 4)
+            .attr("height", 4)
+            .append("path")
+            .attr("d", "M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2")
+            .attr("stroke", "#ff0000")
+            .attr("stroke-width", 0.5);
+
+        setLegend(colorScale, homePriceData);
+    });
+}
+
+
+function callback(data) {
+    const homePriceData = data[0];
+    const allParishes = topojson.feature(data[1], data[1].objects.LA_county);
+    
+    // Manual list of Cancer Alley parishes
+    const cancerAlleyParishes = [
+        'Jefferson', 'Plaquemines', 'Saint Bernard', 'Orleans',
+        'Saint Charles', 'Saint John the Baptist', 'Ascension',
+        'Saint James', 'Iberville', 'East Baton Rouge', 'West Baton Rouge'
+    ];
+
+    // Join data
+    allParishes.features = joinData(allParishes.features, homePriceData);
+    
+    // Add Cancer Alley flag
+    allParishes.features.forEach(parish => {
+        parish.properties.isCancerAlley = cancerAlleyParishes.includes(parish.properties.NAME);
+    });
+
+    // Create color scale
+    const colorScale = makeColorScale(homePriceData);
+
+    // Draw all parishes
+    g.selectAll(".parish")
+        .data(allParishes.features)
+        .enter()
+        .append("path")
+        .attr("class", d => `parish ${d.properties.isCancerAlley ? 'cancer-alley' : ''}`)
+        .attr("d", path)
+        .style("fill", d => colorScale(d.properties.home_price))
+        .style("stroke", "#fff")
+        .style("stroke-width", "0.5px")
+        .on("mouseover", function(event, d) {
+            if (d.properties.isCancerAlley) {
+                const hoveredPrice = d.properties.home_price;
+                const range = [hoveredPrice * 0.9, hoveredPrice * 1.1];
+                
+                g.selectAll(".parish")
+                    .classed("highlighted", p => 
+                        !p.properties.isCancerAlley && 
+                        p.properties.home_price >= range[0] && 
+                        p.properties.home_price <= range[1]
+                    )
+                    .classed("faded", p => 
+                        !p.properties.isCancerAlley && 
+                        (p.properties.home_price < range[0] || 
+                         p.properties.home_price > range[1])
+                    );
+            }
+        })
+        .on("mouseout", function() {
+            g.selectAll(".parish")
+                .classed("highlighted", false)
+                .classed("faded", false);
+        });
+
+    // Style Cancer Alley parishes
+    g.selectAll(".cancer-alley")
+        .style("fill", "url(#caHatch)")
+        .style("stroke", "red")
+        .style("stroke-width", "2px");
+}
 
 function joinData(parishes, homePriceData) {
     return parishes.map(parish => {
@@ -145,7 +215,6 @@ function joinData(parishes, homePriceData) {
         return parish;
     });
 }
-
 
 function setBackground(la_county, map, path){
     var counties = map.append("path")
@@ -185,16 +254,16 @@ function setTRI(tri_sites, g, projection){ // Changed parameter from map to g
             var coords = projection(d.geometry.coordinates);
             return "translate(" + coords + ")";
         })
-        .on("mouseover", function(event, d){
-            console.log("TRI properties:", d.properties);
-            setLabel(d.properties);
-        })
-        .on("mousemove", function(event){
-            moveLabel(event);
-        })
-        .on("mouseout", function(){
-            d3.select(".infolabel").remove();
-        });
+        // .on("mouseover", function(event, d){
+        //     console.log("TRI properties:", d.properties);
+        //     setLabel(d.properties);
+        // })
+        // .on("mousemove", function(event){
+        //     moveLabel(event);
+        // })
+        // .on("mouseout", function(){
+        //     d3.select(".infolabel").remove();
+        // });
 };
 
 
@@ -233,85 +302,67 @@ function drawAllParishes(parishes, map, path, colorScale) {
         .style("opacity", 0.9);
 }
 
-function highlightCancerAlley(cancerAlley, map, path) {
-    // Add hatch pattern definition
-    var defs = map.append("defs");
-    defs.append("pattern")
-        .attr("id", "caHatch")
-        .attr("patternUnits", "userSpaceOnUse")
-        .attr("width", 4)
-        .attr("height", 4)
-        .append("path")
-        .attr("d", "M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2")
-        .attr("stroke", "#ff0000")
-        .attr("stroke-width", 0.5);
-
-    // Draw Cancer Alley parishes with red hatch and border
-    map.selectAll(".cancer-alley")
+function highlightCancerAlley(cancerAlley, map, path, colorScale, laParishes, g) {
+    // 1. Create cancer alley paths (visual only)
+    g.selectAll(".cancer-alley")
         .data(cancerAlley.features)
         .enter()
         .append("path")
         .attr("class", "cancer-alley")
         .attr("d", path)
         .style("fill", "url(#caHatch)")
-        .style("stroke", "#ff0000")
+        .style("stroke", "red")
         .style("stroke-width", "2px")
-        .style("opacity", 0.7);
+        .style("opacity", 0.7)
+        .style("pointer-events", "none"); // Disable direct interaction
+
+    // 2. Create lookup of Cancer Alley parish names
+    const cancerAlleyNames = new Set(
+        cancerAlley.features.map(feature => feature.properties.NAME)
+    );
+
+    // 3. Add pointer event delegation
+    const svgElement = map.node();
+    svgElement.addEventListener('pointermove', (event) => {
+        const point = d3.pointer(event, svgElement);
+        const target = document.elementFromPoint(point[0], point[1]);
+        
+        // Check if we're over a cancer alley parish
+        const isOverCA = cancerAlley.features.some(feature => {
+            const pathElement = document.querySelector(`path[data-name="${feature.properties.NAME}"]`);
+            return pathElement && pathElement.contains(target);
+        });
+
+        if (isOverCA) {
+            const hoveredFeature = cancerAlley.features.find(feature => {
+                const pathElement = document.querySelector(`path[data-name="${feature.properties.NAME}"]`);
+                return pathElement && pathElement.contains(target);
+            });
+
+            if (hoveredFeature) {
+                console.log("Delegated hover over:", hoveredFeature.properties.NAME);
+                const hoveredPrice = hoveredFeature.properties.home_price;
+                const range = [hoveredPrice * 0.9, hoveredPrice * 1.1];
+                
+                // Highlight matching parishes
+                g.selectAll(".parish").classed("highlighted", p => 
+                    !cancerAlleyNames.has(p.properties.NAME) && 
+                    p.properties.home_price >= range[0] && 
+                    p.properties.home_price <= range[1]
+                );
+                return;
+            }
+        }
+        
+        // Reset if not hovering over CA
+        g.selectAll(".parish").classed("highlighted", false);
+    });
+
+    // 4. Add names to paths for debugging
+    g.selectAll(".cancer-alley")
+        .attr("data-name", d => d.properties.NAME);
 }
 
-// function highlightCancerAlley(cancerAlley, map, path) {
-//     // Add cross-hatch pattern definition
-//     var defs = map.append("defs");
-    
-//     // Create cross-hatch pattern
-//     defs.append("pattern")
-//         .attr("id", "caCrossHatch")
-//         .attr("patternUnits", "userSpaceOnUse")
-//         .attr("width", 8)
-//         .attr("height", 8)
-//         .append("g")
-//         .style("stroke", "#ff0000") // Red color for the hatch
-//         .style("stroke-width", 1)   // Thinner lines
-//         .html('<path d="M-1,1 l2,-2 M0,8 l8,-8 M7,9 l2,-2" />' + 
-//               '<path d="M1,-1 l-2,2 M8,0 l-8,8 M9,7 l-2,2" />');
-
-//     // Draw Cancer Alley parishes with cross-hatch border and no fill
-//     g.selectAll(".cancer-alley")
-//         .data(cancerAlley.features)
-//         .enter()
-//         .append("path")
-//         .attr("class", "cancer-alley")
-//         .attr("d", path)
-//         .style("fill", "none")  // No fill
-//         .style("stroke", "url(#caCrossHatch)")  // Use the cross-hatch pattern
-//         .style("stroke-width", "4px")  // Thicker stroke for visibility
-//         .style("opacity", 0.9);  // Slightly more opaque
-// }
-
-
-//function to recolor the map
-function recolorMap(colorScale){
-    d3.selectAll(".cancer_parish")
-        .transition()
-        .duration(500)
-        .style("fill", function(d){
-            const val = d.properties[expressed];
-            return colorScale(val) || "#ccc";
-        });
-};
-
-function createRadioButtons(attributes, homePriceData) {
-    const container = d3.select("#classbutton");
-    container.selectAll("*").remove(); 
-    
-    container.append("b").text("Home Price Data").append("br");
-    
-    // Since we only have one attribute now, we might just show a label
-    container.append("label")
-        .text("Median Home Prices (2024)")
-        .style("font-weight", "bold")
-        .style("margin-right", "10px");
-};
 
 function setLegend(colorScale, homePriceData, options = {}) {
     // Default options that you can override

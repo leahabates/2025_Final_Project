@@ -1,0 +1,161 @@
+/*insert style here*/
+
+svg * {
+    pointer-events: all !important;
+}
+
+.counties {
+    fill: #f0f0f0;
+    stroke: #999;
+    stroke-width: 0.5px;
+}
+
+.cancer_parish {
+    stroke: #fff;
+    stroke-width: 0.5px;
+}
+
+.map {
+    background-color: #f9f9f9;
+}
+
+/* Ensure parishes can be hovered */
+.parish {
+    transition: all 0.3s;
+    pointer-events: all;
+    z-index: 1;
+}
+
+.parish:hover {
+    stroke: #333 !important;
+    stroke-width: 1.5px !important;
+}
+
+/* Highlight style for similar parishes */
+.parish.highlighted {
+    opacity: 1 !important;
+    stroke: #000 !important;
+    stroke-width: 2px !important;
+    filter: brightness(1.1);
+}
+
+/* Faded style for non-matching parishes */
+.parish.faded {
+    opacity: 0.3;
+    stroke-width: 0.5px;
+}
+
+/* Cancer Alley specific styles */
+.cancer-alley {
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    z-index: 10;
+    pointer-events: visiblePainted !important;
+    stroke-width: 2px !important;
+}
+
+.cancer-alley:hover {
+    stroke: yellow !important;
+    stroke-width: 4px !important;
+    filter: drop-shadow(0 0 5px red);
+}
+
+
+#legendContainer {
+    background: rgba(255,255,255,0.8);
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.tri {
+    fill: rgb(255, 0, 0);
+    opacity: 0.7;
+    z-index: 4;
+}
+
+.mississippi{
+    stroke: rgb(153, 153, 226);
+}
+/* Layout with the map on the left and buttons on the right */
+#layout {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+#mapContainer {
+    width: 75vw;
+    height: 100vh;  /* Full screen height */
+}
+
+#buttonContainer {
+    width: 250px; /* Width for button container */
+    margin-left: 20px;
+    margin-top: 20px;
+}
+
+#classbutton {
+    padding: 10px;
+    font-family: sans-serif;
+    font-size: 14px;
+    background: #fff;
+    border-radius: 5px;
+}
+
+#classbutton b {
+    font-size: 16px;
+    display: block;
+    margin-bottom: 6px;
+}
+#legendContainer {
+    margin-top: 15px;
+    padding: 10px;
+    background: #fff;
+    border-radius: 5px;
+    font-family: sans-serif;
+}
+
+#legendContainer text {
+    fill: #000; /* Black text for readability */
+    font-size: 12px;
+    dominant-baseline: middle;
+    alignment-baseline: middle;
+}
+
+#legendContainer .legendTitle {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+.infolabel {
+    position: absolute;
+    z-index: 1000;
+    background-color: rgba(255, 255, 255, 0.95); /* dark background */
+    color: #000000; /* white text */
+    padding: 12px 16px;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    pointer-events: all;
+    max-width: 260px;
+}
+
+.infolabel h2 {
+    font-size: 16px;
+    margin: 0 0 6px;
+    padding: 0;
+    font-weight: 600;
+    color: #000000; /* optional accent color */
+}
+
+.infolabel b {
+    font-weight: 500;
+    color: #000000; /* softer bold */
+}
+
+.infolabel .labelname {
+    display: none; /* optional – hides redundant name */
+}
+
