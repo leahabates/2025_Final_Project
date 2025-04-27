@@ -54,7 +54,7 @@ pattern path {
 
 /* Regular parishes */
 .parish {
-    /* fill: #dcdcdc; */
+    fill: var(--choropleth-color);
     stroke: #fff;
     stroke-width: 0.5px;
     transition: all 0.3s ease;
@@ -64,11 +64,11 @@ pattern path {
 
 /* Cancer Alley parishes */
 .cancer-alley {
-    pointer-events: all !important;  /* Must be clickable */
+    /* pointer-events: all !important;  */
     stroke: #ff0000 !important;
     stroke-width: 2px !important;
-    fill: url(#caHatch) !important;
-    opacity: 0.7;
+    /* fill-opacity: 1.0; */
+    opacity: 1.0;
 }
 
 /* Hover states */
@@ -79,13 +79,17 @@ pattern path {
     filter: brightness(1.2);
 }
 
-.parish.faded {
-    opacity: 0.3;
+/* Highlighted non-Cancer Alley parishes */
+.parish.highlighted:not(.cancer-alley) {
+    stroke: #000 !important;
+    stroke-width: 2px !important;
+    filter: brightness(1.1);
 }
 
 .cancer-alley:hover {
     stroke: yellow;
-    stroke-width: 3px;
+    stroke-width: 4px;
+    filter: drop-shadow(0 0 2px rgba(255, 0, 0, 0.7));
     opacity: 0.9;
 }
 
@@ -141,3 +145,36 @@ pattern path {
     z-index: 1000;
     pointer-events: none; /* Shouldn't block map interactions */
 }
+
+/* River style */
+.mississippi {
+    pointer-events: none; /* Double protection against hover */
+    stroke: #1f78b4;
+    stroke-width: 4px;
+    fill: none;
+}
+
+/* Make sure base elements are visible */
+.mississippi:not(.faded) {
+    opacity: 1;
+    stroke: #1f78b4;
+}
+
+/* TRI sites style */
+.tri-site {
+    pointer-events: none; /* Double protection against hover */
+    fill: red;
+    opacity: 0.7;
+}
+
+.tri-site:not(.faded) {
+    opacity: 0.7;
+    fill: red;
+}
+
+/* Faded state for all elements */
+.parish.faded, .mississippi.faded, .tri-site.faded {
+    opacity: 0.3;
+    transition: opacity 0.3s ease;
+}
+

@@ -43,12 +43,20 @@ function setMap() {
     // Load data
     var promises = [
         d3.csv("data/home_price_20241231.csv"),
-        d3.json("data/LA_county.topojson")
+        d3.json("data/LA_county.topojson"),
+        d3.json("data/LA_river.topojson"),
+        d3.json("data/TRI_cancer_perish.topojson")
     ];
 
+    // Promise.all(promises).then(function(data) {
+    //     var homePriceData = data[0];
+    //     var allParishes = topojson.feature(data[1], data[1].objects.LA_county);
+    
     Promise.all(promises).then(function(data) {
         var homePriceData = data[0];
         var allParishes = topojson.feature(data[1], data[1].objects.LA_county);
+        var laRiver = data[2];
+        var triSites = data[3];
 
         // Define Cancer Alley parishes manually
         const cancerAlleyParishes = [
@@ -78,7 +86,6 @@ function setMap() {
         // Create color scale
         const colorScale = makeColorScale(homePriceData);
 
-        // Draw all parishes
         g.selectAll(".parish")
             .data(allParishes.features)
             .enter()
@@ -86,53 +93,72 @@ function setMap() {
             .attr("class", d => `parish ${d.properties.isCancerAlley ? 'cancer-alley' : ''}`)
             .attr("d", path)
             .style("fill", d => d.properties.home_price ? colorScale(d.properties.home_price) : "#f5f5f5")
-            .style("stroke", "#fff")
-            .style("stroke-width", "0.5px")
+            .style("stroke", d => d.properties.isCancerAlley ? "#ff0000" : "#fff") // Red for Cancer Alley
+            .style("stroke-width", d => d.properties.isCancerAlley ? "2px" : "0.5px") // Thicker for Cancer Alley
             .on("mouseover", function(event, d) {
                 if (d.properties.isCancerAlley) {
                     const hoveredPrice = d.properties.home_price;
                     const range = [hoveredPrice * 0.9, hoveredPrice * 1.1];
                     
-                    g.selectAll(".parish")
+                    // Keep this Cancer Alley parish looking normal (red border)
+                    d3.select(this)
+                        .classed("faded", false);
+                    
+                    // Highlight matching non-Cancer Alley parishes with black border
+                    g.selectAll(".parish:not(.cancer-alley)")
                         .classed("highlighted", p => 
-                            !p.properties.isCancerAlley && 
                             p.properties.home_price >= range[0] && 
                             p.properties.home_price <= range[1]
                         )
+                        .classed("faded", false);
+                    
+                    // Fade all other parishes
+                    g.selectAll(".parish")
                         .classed("faded", p => 
-                            !p.properties.isCancerAlley && 
-                            (p.properties.home_price < range[0] || 
-                             p.properties.home_price > range[1])
+                            p !== d && // Not the hovered parish
+                            !(!p.properties.isCancerAlley && // Not a highlighted match
+                              p.properties.home_price >= range[0] && 
+                              p.properties.home_price <= range[1])
                         );
                 }
             })
             .on("mouseout", function() {
+                // Reset all parishes
                 g.selectAll(".parish")
                     .classed("highlighted", false)
                     .classed("faded", false);
             });
 
-        // Style Cancer Alley parishes
-        g.selectAll(".cancer-alley")
-            .style("fill", "url(#caHatch)")
-            .style("stroke", "red")
-            .style("stroke-width", "2px")
-            .style("opacity", 0.7);
-
-        // Add pattern definition
-        var defs = map.append("defs");
-        defs.append("pattern")
-            .attr("id", "caHatch")
-            .attr("patternUnits", "userSpaceOnUse")
-            .attr("width", 4)
-            .attr("height", 4)
-            .append("path")
-            .attr("d", "M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2")
-            .attr("stroke", "#ff0000")
-            .attr("stroke-width", 0.5);
-
         setLegend(colorScale, homePriceData);
+        
+        // Add Mississippi River (transparent to hover)
+        g.selectAll(".mississippi")
+            .data(topojson.feature(laRiver, laRiver.objects.LA_river).features)
+            .enter()
+            .append("path")
+            .attr("class", "mississippi")
+            .attr("d", path)
+            .attr("fill", "none")
+            .attr("stroke", "#1f78b4")
+            .attr("stroke-width", 4)
+            .style("pointer-events", "none"); // Makes it ignore hover
+        
+        // Add TRI sites (transparent to hover)
+        g.selectAll(".tri-site")
+            .data(topojson.feature(triSites, triSites.objects.TRI_cancer_perish).features)
+            .enter()
+            .append("circle")
+            .attr("class", "tri-site")
+            .attr("r", 3)
+            .attr("transform", function(d) {
+                var coords = projection(d.geometry.coordinates);
+                return "translate(" + coords + ")";
+            })
+            .attr("fill", "red")
+            .attr("opacity", 0.7)
+            .style("pointer-events", "none"); // Makes it ignore hover 
     });
+
 }
 
 
