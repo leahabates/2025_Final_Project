@@ -1,121 +1,98 @@
-/* Remove this overly broad rule - it can cause unexpected behavior */
-/* svg * {
-    pointer-events: all !important; 
-} */
+/* === Base Map Styles === */
 
-/* Ensure proper stacking */
-/* .map-group path {
-    vector-effect: non-scaling-stroke;
-} */
-
-/* Make sure patterns work */
-/* pattern path {
-    stroke: #ff0000;
-    stroke-width: 0.5;
-} */
-
-/* Hide hit areas but keep them interactive */
-/* .ca-hit-area {
-    fill: transparent !important;
-    stroke: none !important;
-    pointer-events: all !important;
-} */
-
-/* Ensure interactive layer is on top */
-.interactive-layer {
-    pointer-events: all;
-    z-index: 100;
-}
-
-/* Add to your CSS */
-/* .debug-hover {
-    stroke: cyan !important;
-    stroke-width: 4px !important;
-    animation: pulse 1s infinite;
-}
-@keyframes pulse {
-    0% { opacity: 0.7; }
-    50% { opacity: 1; }
-    100% { opacity: 0.7; }
-} */
-
-/* Base map styles */
+/* Main map container styling */
 .map {
-    background-color: #ffffff;
-    display: block;
+    background-color: #ffffff; /* White background for the map */
+    display: block; /* Makes sure the SVG map takes up its own line */
 }
 
-.counties {
-    fill: #f0f0f0;
-    stroke: #999;
+/* US States Background Layer */
+/* States are used as a geographic reference layer behind parishes */
+.states {
+    fill: #f0f0f0; /* Light gray fill for states */
+    stroke: #999; /* Medium gray border */
     stroke-width: 0.5px;
-    pointer-events: none; /* Non-interactive background */
+    pointer-events: none; /* Disable interaction for background reference */
 }
 
-/* Regular parishes */
+/* Regular Parishes Styling */
+/* All parishes by default, styled with a dynamic fill color */
 .parish {
-    fill: var(--choropleth-color);
-    stroke: #fff;
+    fill: var(--choropleth-color); /* Choropleth-based fill, set via CSS variable */
+    stroke: #fff; /* White border */
     stroke-width: 0.5px;
-    transition: all 0.3s ease;
-    pointer-events: all;
-    /* vector-effect: non-scaling-stroke; */
+    transition: all 0.3s ease; /* Smooth transition on hover or state change */
+    pointer-events: all; /* Parishes are interactive */
+    /* vector-effect: non-scaling-stroke; */ /* Optional: prevent stroke from scaling with zoom */
 }
 
-/* Cancer Alley parishes */
+
+/* Special Styling for Cancer Alley Parishes */
+/* Cancer Alley parishes are visually emphasized */
 .cancer-alley {
-    /* pointer-events: all !important;  */
-    stroke: #ff0000 !important;
-    stroke-width: 2px !important;
-    /* fill-opacity: 1.0; */
-    opacity: 1.0;
+    /* pointer-events: all !important; */ /* Optional override to force interactivity */
+    stroke: #ff0000 !important; /* Red border to highlight */
+    stroke-width: 2px !important; /* Thicker border */
+    /* fill-opacity: 1.0; */ /* Optional full opacity */
+    opacity: 1.0; /* Fully visible */
 }
 
-/* Hover states */
+/* TRI (Toxic Release Inventory) Sites */
+/* TRI sites are always visible and non-interactive */
+.tri-site {
+    pointer-events: none; /* Prevent interaction */
+    fill: red; /* Bright red to indicate hazard */
+    opacity: 1.0 !important; /* Fully opaque and unaffected by fading */
+}
+
+/* Mississippi River Styling */
+.mississippi {
+    pointer-events: none; /* Non-interactive river */
+    stroke: #1f78b4; /* Blue stroke for the river */
+    stroke-width: 4px; /* Thicker line */
+    fill: none; /* No fill */
+    opacity: 1; /* Fully visible */
+}
+
+
+
+/* === Interactivity & Highlighting === */
+
+/* Hover or selection highlight for parishes */
 .parish.highlighted {
-    stroke: #000 !important;
+    stroke: #000 !important; /* Black border on highlight */
     stroke-width: 2px !important;
-    /* opacity: 1 !important; */
-    filter: brightness(1.2);
+    /* opacity: 1 !important; */ /* Optional full visibility */
+    filter: brightness(1.2); /* Slightly brighten on highlight */
 }
 
-/* Highlighted non-Cancer Alley parishes */
+/* Dimmed state for fading out elements */
+.parish.faded,
+.mississippi.faded {
+    opacity: 0.3; /* Partially transparent */
+    transition: opacity 0.3s ease; /* Smooth transition */
+}
+
+/* Highlighting for non-Cancer Alley parishes */
 .parish.highlighted:not(.cancer-alley) {
-    stroke: #000 !important;
+    stroke: #000 !important; /* Same as general highlight */
     stroke-width: 2px !important;
-    filter: brightness(1.1);
+    filter: brightness(1.1); /* Slightly less bright than general highlight */
 }
 
-.cancer-alley:hover {
-    stroke: yellow;
-    stroke-width: 4px;
-    filter: drop-shadow(0 0 2px rgba(255, 0, 0, 0.7));
-    opacity: 0.9;
-}
 
-/* Debug styles - remove after testing */
-.debug-ca-hover {
-    outline: 2px solid lime !important;
-    stroke: cyan !important;
-}
 
-/* TRI sites */
-.tri {
-    fill: rgb(255, 0, 0);
-    opacity: 0.7;
-    z-index: 3; /* Above parishes */
-    pointer-events: all;
-}
+/* === Layout and Container Styles === */
 
-/* Layout */
-/* #mapContainer {
-    width: 75vw;
-    height: 100vh;
+/* Fullscreen map container */
+#mapContainer {
+    width: 100%;
+    height: 100vh; /* Full viewport height */
     position: relative;
-    overflow: hidden;
-} */
+    overflow: hidden; /* Hide any overflow elements */
+}
 
-/* Ensure the SVG fills its container */
+/* SVG inside map container is absolutely positioned */
 #mapContainer svg {
     width: 100%;
     height: 100%;
@@ -124,85 +101,7 @@
     left: 0;
 }
 
-
-#layout {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-}
-
-/* Legend and controls */
-#legendContainer, #buttonContainer {
-    background: rgba(255,255,255,0.8);
-    padding: 10px;
-    border-radius: 5px;
-    z-index: 100;
-}
-
-/* River style */
-/* .mississippi {
-    pointer-events: none; 
-    stroke: #1f78b4;
-    stroke-width: 4px;
-    fill: none;
-} */
-
-/* Base styles for river */
-.mississippi {
-    pointer-events: none;
-    stroke: #1f78b4;
-    stroke-width: 4px;
-    fill: none;
-    opacity: 1;
-}
-
-/* TRI sites should never fade */
-.tri-site {
-    pointer-events: none;
-    fill: red;
-    opacity: 1.0 !important; /* Force constant opacity */
-}
-
-
-/* Faded state for all elements */
-.parish.faded, .mississippi.faded {
-    opacity: 0.3;
-    transition: opacity 0.3s ease;
-}
-
-/* Map Container - This will take up the full available space */
-#mapContainer {
-    width: 100%;
-    height: 100vh; 
-    position: relative; 
-    overflow: hidden; 
-}
-
-#legendContainer {
-    margin-top: 5%;
-    right: 7%;
-    padding: 10px;
-    background: #fff;
-    position: absolute; 
- 
-}
-
-#legendContainer text {
-    fill: #000; 
-    font-size: 12px;
-    dominant-baseline: middle;
-}
-
-/* Base map styling */
-#mapContainer svg {
-    width: 100%;
-    height: 100%; 
-    position: absolute;
-    top: 0;
-    left: 0;
-}
-
-/* Layout of content */
+/* Layout container for supporting content (e.g., legend, descriptions) */
 #layout {
     display: flex;
     justify-content: flex-start;
@@ -211,14 +110,31 @@
     height: 90%;
 }
 
-/* Info label - Keep this in place with z-index to ensure it's on top */
-/* .infolabel {
-    position: absolute;
-    z-index: 1000;
-    pointer-events: none;
-} */
 
-/* Optional: Adjust content and padding for better structure */
+
+/* === Legend Styling === */
+
+/* Positioning and styling of the map legend */
+#legendContainer {
+    margin-top: 5%;
+    right: 7%; /* Position from the right edge */
+    padding: 10px;
+    background: #fff; /* White background for contrast */
+    position: absolute;
+}
+
+/* Legend text styling */
+#legendContainer text {
+    fill: #000;
+    font-size: 12px;
+    dominant-baseline: middle; /* Vertically center-align text */
+}
+
+
+
+/* === Content Area === */
+
+/* General text content wrapper (e.g., for descriptions, headings) */
 #content {
     width: 90%;
     padding: 40px 20px;
@@ -227,39 +143,39 @@
     line-height: 1.6;
 }
 
-/* Adjust heading and paragraphs inside the content */
+/* Section heading formatting */
 #content h2 {
     font-size: 2.5rem;
     margin-bottom: 20px;
 }
 
+/* Paragraph formatting */
 #content p {
     font-size: 1.2rem;
     margin-bottom: 20px;
     opacity: 0.9;
     max-width: 100%;
 }
-.states {
-    fill: #f0f0f0;
-    stroke: #999;
-    stroke-width: 0.5px;
-    pointer-events: none; /* Non-interactive background */
-}
 
-/* Parish label styles */
+
+
+/* === Label Styles === */
+
+/* General label styling for parishes */
 .parish-label {
     font-family: Arial, sans-serif;
     font-weight: bold;
     opacity: 1;
     transition: opacity 0.3s ease;
-  }
-  
-  .cancer-alley-label {
-    fill: #ff0000 !important; /* Red for Cancer Alley */
+}
+
+/* Special label styling for Cancer Alley */
+.cancer-alley-label {
+    fill: #ff0000 !important; /* Red to match parish border */
     font-weight: bold;
-  }
-  
-  /* Faded state */
-  .parish-label.faded {
+}
+
+/* Dimmed labels when fading is applied */
+.parish-label.faded {
     opacity: 0.3;
-  }
+}
