@@ -35,7 +35,7 @@ function setMap() {
 
     // Set up zoom behavior
     var zoom = d3.zoom()
-        .scaleExtent([0.5, 10])
+        .scaleExtent([0.4, 10])
         .on("zoom", function(event) {
             g.attr("transform", event.transform);
         });
@@ -102,37 +102,53 @@ function setMap() {
                     const hoveredPrice = d.properties.home_price;
                     const range = [hoveredPrice * 0.9, hoveredPrice * 1.1];
                     
-                    // Keep this Cancer Alley parish looking normal (red border)
-                    d3.select(this)
-                        .classed("faded", false);
+                    // Highlight current parish and label
+                    d3.select(this).classed("faded", false);
+                    g.selectAll(`.parish-label[data-name="${d.properties.NAME}"]`)
+                     .classed("faded", false);
                     
-                    // Highlight matching non-Cancer Alley parishes with black border
-                    g.selectAll(".parish:not(.cancer-alley)")
+                    // Highlight matching non-Cancer Alley parishes and their labels
+                    g.selectAll(".parish:not(.cancer-alley), .parish-label:not(.cancer-alley-label)")
                         .classed("highlighted", p => 
-                            p.properties.home_price >= range[0] && 
-                            p.properties.home_price <= range[1]
+                            p.properties?.home_price >= range[0] && 
+                            p.properties?.home_price <= range[1]
                         )
                         .classed("faded", false);
                     
-                    // Fade all other parishes and the river (but not TRI sites)
-                    g.selectAll(".parish, .mississippi")
+                    // Fade all other elements
+                    g.selectAll(".parish, .parish-label, .mississippi")
                         .classed("faded", p => 
-                            p !== d && // Not the hovered parish
-                            !(!p.properties?.isCancerAlley && // Not a highlighted match
-                              p.properties?.home_price >= range[0] && 
-                              p.properties?.home_price <= range[1])
+                            (p.properties && p !== d && 
+                             !(p.properties.home_price >= range[0] && 
+                               p.properties.home_price <= range[1] &&
+                               !p.properties.isCancerAlley))
                         );
                 }
             })
             .on("mouseout", function() {
-                // Reset all elements except TRI sites
-                g.selectAll(".parish, .mississippi")
+                // Reset all elements
+                g.selectAll(".parish, .parish-label, .mississippi")
                     .classed("highlighted", false)
                     .classed("faded", false);
             });
 
         setLegend(colorScale, homePriceData);
         
+        // Add parish names (after drawing parishes)
+        g.selectAll(".parish-label")
+        .data(allParishes.features)
+        .enter()
+        .append("text")
+        .attr("class", d => `parish-label ${d.properties.isCancerAlley ? 'cancer-alley-label' : ''}`)
+        .attr("x", d => path.centroid(d)[0])
+        .attr("y", d => path.centroid(d)[1])
+        .attr("text-anchor", "middle")
+        .attr("dy", "0.35em")
+        .text(d => d.properties.NAME)
+        .style("font-size", "10px")
+        .style("fill", "#333")
+        .style("pointer-events", "none");
+
         // Add Mississippi River (transparent to hover)
         g.selectAll(".mississippi")
             .data(topojson.feature(laRiver, laRiver.objects.LA_river).features)

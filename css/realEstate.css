@@ -4,22 +4,22 @@
 } */
 
 /* Ensure proper stacking */
-.map-group path {
+/* .map-group path {
     vector-effect: non-scaling-stroke;
-}
+} */
 
 /* Make sure patterns work */
-pattern path {
+/* pattern path {
     stroke: #ff0000;
     stroke-width: 0.5;
-}
+} */
 
 /* Hide hit areas but keep them interactive */
-.ca-hit-area {
+/* .ca-hit-area {
     fill: transparent !important;
     stroke: none !important;
     pointer-events: all !important;
-}
+} */
 
 /* Ensure interactive layer is on top */
 .interactive-layer {
@@ -28,7 +28,7 @@ pattern path {
 }
 
 /* Add to your CSS */
-.debug-hover {
+/* .debug-hover {
     stroke: cyan !important;
     stroke-width: 4px !important;
     animation: pulse 1s infinite;
@@ -37,7 +37,7 @@ pattern path {
     0% { opacity: 0.7; }
     50% { opacity: 1; }
     100% { opacity: 0.7; }
-}
+} */
 
 /* Base map styles */
 .map {
@@ -139,13 +139,6 @@ pattern path {
     z-index: 100;
 }
 
-/* Info label */
-.infolabel {
-    position: absolute;
-    z-index: 1000;
-    pointer-events: none; /* Shouldn't block map interactions */
-}
-
 /* River style */
 /* .mississippi {
     pointer-events: none; 
@@ -219,11 +212,11 @@ pattern path {
 }
 
 /* Info label - Keep this in place with z-index to ensure it's on top */
-.infolabel {
+/* .infolabel {
     position: absolute;
     z-index: 1000;
     pointer-events: none;
-}
+} */
 
 /* Optional: Adjust content and padding for better structure */
 #content {
@@ -252,3 +245,21 @@ pattern path {
     stroke-width: 0.5px;
     pointer-events: none; /* Non-interactive background */
 }
+
+/* Parish label styles */
+.parish-label {
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+  }
+  
+  .cancer-alley-label {
+    fill: #ff0000 !important; /* Red for Cancer Alley */
+    font-weight: bold;
+  }
+  
+  /* Faded state */
+  .parish-label.faded {
+    opacity: 0.3;
+  }
