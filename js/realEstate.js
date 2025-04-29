@@ -35,7 +35,7 @@ function setMap() {
 
     // Set up zoom behavior
     var zoom = d3.zoom()
-        .scaleExtent([0.30, 10])
+        .scaleExtent([0.5, 10])
         .on("zoom", function(event) {
             g.attr("transform", event.transform);
         });
