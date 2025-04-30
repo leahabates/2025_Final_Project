@@ -1,6 +1,13 @@
+
 //insert code here!
-//insert code here!
-var attrArray = ["Total_Pop", "white", "black", "poverty_rates", "cancer_inc_rate_per_100000"]
+var attrArray = [
+    "Total Population",
+    "White Population",
+    "Black Population",
+    "Poverty Rates",
+    "Cancer Incident Rate/ 100000" // Corrected
+  ];
+  
 
 var expressed = attrArray[0]
 
@@ -71,6 +78,7 @@ function setMap(){
         let colorScale = makeColorScale(csvData);
         setEnumnerationUnits(la_cancer_parish, map, path, colorScale);
 
+        // add a legend
         setLegend(colorScale, csvData);
         
        // add mississippi
@@ -79,11 +87,12 @@ function setMap(){
        // add TRI sites
        setTRI(tri_sites, map, projection);
 
+       //add buttons
        createRadioButtons(attrArray, csvData);
   
     };
 };
-
+//function to join the csv data with the la_cancer_parishes
 function joinData(la_cancer_parish, csvData){
     //loop through the csv to set each with the geojson region
     for (var i = 0; i < csvData.length; i++) {
@@ -107,14 +116,14 @@ function joinData(la_cancer_parish, csvData){
     }
     return la_cancer_parish;
 };
-
+//this function set the surrounding parishes
 function setBackground(la_county, map, path){
     var counties = map.append("path")
             .datum(la_county)
             .attr("class", "counties")
             .attr("d", path);
 };
-
+//set the mississippi on the map
 function setRiver(la_river, map, path){
     var mississippi = map.selectAll(".mississippi")
              .data(la_river.features)
@@ -127,7 +136,7 @@ function setRiver(la_river, map, path){
              .attr("fill", "none")
              .attr("stroke-width", 4)
 };
-
+// sets the TRI sites and calls for the function that allow for hoovering over the sites to display information
 function setTRI(tri_sites, map, projection){
     var tri = map.selectAll(".tri")
             .data(tri_sites.features)
@@ -196,6 +205,7 @@ function recolorMap(colorScale){
             return colorScale(val) || "#ccc"; // Fallback if data is missing
         });
     };
+// function that creates buttons that user can change between attributes
 function createRadioButtons(attributes, csvData) {
     const container = d3.select("#classbutton");
     container.selectAll("*").remove(); 
@@ -228,6 +238,7 @@ function createRadioButtons(attributes, csvData) {
         container.append("br");
     });
 };
+// function to create a legend that will change as user changes demographic attribute
 function setLegend(colorScale, csvData){
     var legendWidth = window.innerWidth * 0.25,
         legendHeight = window.innerHeight * 0.15;
@@ -249,7 +260,7 @@ function setLegend(colorScale, csvData){
         classLabels.push(`${Math.round(minVal)} - ${Math.round(maxVal)}`);
     }
 
-    // --- Add main legend title ---
+    // Add main legend title 
     legend.append("text")
         .attr("class", "legendMainTitle")
         .attr("x", 5)
@@ -259,7 +270,7 @@ function setLegend(colorScale, csvData){
         .style("fill", "#000")
         .text("Legend");
 
-    // --- Add subtitle showing the selected attribute ---
+    //Add subtitle showing the selected attribute 
     legend.append("text")
         .attr("class", "legendSubtitle")
         .attr("x", 5)
@@ -268,7 +279,7 @@ function setLegend(colorScale, csvData){
         .style("fill", "#000")
         .text(expressed.replace(/_/g, " "));
 
-    // --- Shift color boxes down to leave room for titles ---
+    // Shift color boxes down to leave room for titles 
     var legendItem = legend.selectAll(".legendItem")
         .data(colorClasses)
         .enter()
@@ -291,7 +302,7 @@ function setLegend(colorScale, csvData){
         .style("fill", "#000")
         .text(function(d, i){ return classLabels[i]; });
 
-    // --- TRI dot legend ---
+    // TRI dot legend 
     legend.append("circle")
         .attr("cx", 10)
         .attr("cy", legendHeight + 20)
@@ -305,7 +316,7 @@ function setLegend(colorScale, csvData){
         .style("font-size", "14px")
         .text("TRI Facility Site");
 };
-
+// function that when users hoover over a TRI a popup about that site
 function setLabel(props){   
         // Create label content based on TRI properties
     var labelContent = `
@@ -329,7 +340,7 @@ function setLabel(props){
             .attr("class", "labelname")
             .html(props.FACILIT);
          };
-
+// function that will move the popup to the cursor
 function moveLabel(event){
     // get the label div
     var label = d3.select(".infolabel");
