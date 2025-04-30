@@ -327,7 +327,7 @@ function setLabel(props){
         <b>Chemical:</b> ${props["37. CHEMIC"] || "N/A"}<br>
         <b>Carcinogenic:</b> ${props["46. CARCIN"]}<br>
         <b>Industry:</b> ${props["23. INDUST"]}<br>
-        <b>FRS ID:</b> ${props["3. FRS ID"]}
+        
     `;
     
         //create info label div

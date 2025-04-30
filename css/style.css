@@ -1,44 +1,50 @@
-/*insert style here*/
+/* --- General Map Elements --- */
 .counties {
     fill: #dcdbdb;
     stroke: #fffdfd;
     stroke-width: 2px;
 }
+
 .tri {
     fill: rgb(255, 0, 0);
     opacity: 0.7;
 }
-.cancer_parish{
+
+.cancer_parish {
     fill: rgba(164, 164, 164, 0.632);
     stroke: #FFF;
     stroke-width: 2;
 }
-.mississippi{
+
+.mississippi {
     stroke: rgb(153, 153, 226);
 }
-/* Layout with the map on the left and buttons on the right */
+
+/* --- Layout --- */
 #layout {
     display: flex;
-    justify-content: center; /* Centers both children horizontally */
+    justify-content: center;
     align-items: flex-start;
-    gap: 20px; /* Optional for spacing between map and button container */
+    gap: 20px;
 }
 
 #mapContainer {
-    width: 75vw;  /* Makes sure it's responsive */
-    max-width: 1200px; /* Optionally, limit max width */
+    width: 75vw;
+    max-width: 1200px;
     height: 100vh;
-    flex-shrink: 0; /* Prevents shrinking */
+    flex-shrink: 0;
 }
 
 #buttonContainer {
     width: 250px;
     margin-left: 20px;
     margin-top: 20px;
-    flex-shrink: 0; /* Prevents shrinking */
+    flex-shrink: 0;
+    max-height: 85vh;       /* Ensure sidebar fits short windows */
+    overflow-y: auto;        /* Scrolls if content (like legend) overflows */
 }
 
-
+/* --- Controls --- */
 #classbutton {
     padding: 10px;
     font-family: sans-serif;
@@ -52,16 +58,20 @@
     display: block;
     margin-bottom: 6px;
 }
+
+/* --- Legend --- */
 #legendContainer {
     margin-top: 15px;
     padding: 10px;
     background: #fff;
     border-radius: 5px;
     font-family: sans-serif;
+    box-sizing: border-box;
+    max-height: 100%; /* Let it expand inside buttonContainer */
 }
 
 #legendContainer text {
-    fill: #000; /* Black text for readability */
+    fill: #000;
     font-size: 12px;
     dominant-baseline: middle;
 }
@@ -71,11 +81,13 @@
     font-weight: bold;
     margin-bottom: 6px;
 }
+
+/* --- Tooltip --- */
 .infolabel {
     position: absolute;
     z-index: 1000;
-    background-color: rgba(255, 255, 255, 0.95); /* dark background */
-    color: #000000; /* white text */
+    background-color: rgba(255, 255, 255, 0.95);
+    color: #000000;
     padding: 12px 16px;
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-size: 14px;
@@ -90,18 +102,19 @@
     margin: 0 0 6px;
     padding: 0;
     font-weight: 600;
-    color: #000000; /* optional accent color */
+    color: #000000;
 }
 
 .infolabel b {
     font-weight: 500;
-    color: #000000; /* softer bold */
+    color: #000000;
 }
 
 .infolabel .labelname {
-    display: none; /* optional – hides redundant name */
+    display: none;
 }
-/* Full-screen background section */
+
+/* --- Hero Section --- */
 #hero-section {
     position: relative;
     width: 100%;
@@ -116,44 +129,39 @@
     align-items: center;
     flex-direction: column;
     z-index: 1;
-    padding: 20px; /* Optional padding for spacing */
+    padding: 20px;
 }
 
-
-/* Title Styling */
 #hero-section h1 {
-    font-size: 3rem; /* Large font size for the title */
-    font-weight: bold; /* Makes the title bold */
-    margin: 0; /* Removes any default margins */
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Adds a subtle shadow to the text for better visibility on images */
+    font-size: 3rem;
+    font-weight: bold;
+    margin: 0;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-/* Subtitle Styling */
 #hero-section p {
-    font-size: 1.2rem; 
-    margin-top: 10px; 
-    opacity: 0.8; 
-    
+    font-size: 1.2rem;
+    margin-top: 10px;
+    opacity: 0.8;
 }
-/* Content section styles */
+
+/* --- Content Styling --- */
 #content {
-    width: 90%; 
+    width: 90%;
     padding: 40px 20px;
-    margin: 0 auto; 
-    text-align: left; 
-    line-height: 1.6; 
+    margin: 0 auto;
+    text-align: left;
+    line-height: 1.6;
 }
 
-/* Section titles or any specific heading inside the content */
 #content h2 {
-    font-size: 2.5rem; 
-    margin-bottom: 20px; 
+    font-size: 2.5rem;
+    margin-bottom: 20px;
 }
 
-/* Paragraph text styling inside the content */
 #content p {
     font-size: 1.2rem;
-    margin-bottom: 20px; 
-    opacity: 0.9; 
-    max-width: 100%; 
+    margin-bottom: 20px;
+    opacity: 0.9;
+    max-width: 100%;
 }
