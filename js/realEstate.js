@@ -4,6 +4,13 @@ var attrArray = ["home_price"]; // Array of attribute names used for mapping (e.
 var expressed = attrArray[0]; // Initial attribute to visualize is the first one in the array (i.e., "home_price")
 window.onload = setMap; // When the page loads, run the setMap function to initialize the map
 
+// Hardcoded list of parishes considered part of "Cancer Alley"
+const cancerAlleyParishes = [ // These are known for high industrial pollution and cancer risks
+    'Jefferson', 'Plaquemines', 'Saint Bernard', 'Orleans',  // Southeast cluster
+    'Saint Charles', 'Saint John the Baptist', 'Ascension',  // River parishes
+    'Saint James', 'Iberville', 'East Baton Rouge', 'West Baton Rouge'  // Capital area
+];
+
 function setMap() {
     // Map frame dimensions
     var container = document.getElementById("mapContainer") // Get the container element that will hold the map
@@ -51,21 +58,15 @@ function setMap() {
         d3.json("data/TRI_cancer_perish.topojson"), // 4. Toxic sites (TopoJSON)
         d3.json("data/states.topojson")          // 5. Background states (TopoJSON)
     ];
-    
+
     // Process all loaded data when ready
+    // Promise.all(promises).then(callback);  // Wait for all promises to resolve
     Promise.all(promises).then(function(data) {  // Wait for all promises to resolve
         var homePriceData = data[0];             // Extract home price data (index 0)
         var allParishes = topojson.feature(data[1], data[1].objects.LA_county); // Convert TopoJSON to GeoJSON for parishes
         var laRiver = data[2];                   // Mississippi River data
         var triSites = data[3];                  // Toxic Release Inventory sites
         var background_states = data[4];         // Surrounding states for context
-
-        // Hardcoded list of parishes in "Cancer Alley" (industrial corridor)
-        const cancerAlleyParishes = [            // Known high-risk parishes:
-            'Jefferson', 'Plaquemines', 'Saint Bernard', 'Orleans',       // Southeast cluster
-            'Saint Charles', 'Saint John the Baptist', 'Ascension',       // River parishes
-            'Saint James', 'Iberville', 'East Baton Rouge', 'West Baton Rouge'  // Capital area
-        ];
 
         setStates(background_states, g, path);   // Draw background state boundaries
         
@@ -201,29 +202,29 @@ function callback(data) {
     // Extract and transform the loaded datasets
     const homePriceData = data[0];  // Home price data (CSV converted to array of objects)
     const allParishes = topojson.feature(data[1], data[1].objects.LA_county);  // Convert TopoJSON to GeoJSON for parishes
-    
-    // Hardcoded list of parishes considered part of "Cancer Alley"
-    const cancerAlleyParishes = [ // These are known for high industrial pollution and cancer risks
-        'Jefferson', 'Plaquemines', 'Saint Bernard', 'Orleans',  // Southeast cluster
-        'Saint Charles', 'Saint John the Baptist', 'Ascension',  // River parishes
-        'Saint James', 'Iberville', 'East Baton Rouge', 'West Baton Rouge'  // Capital area
-    ];
 
     // Merge home price data with parish geographic features
     allParishes.features = joinData(allParishes.features, homePriceData);
     
-    // Add isCancerAlley flag to each parish's properties
-    allParishes.features.forEach(parish => {
-        parish.properties.isCancerAlley = cancerAlleyParishes.includes(parish.properties.NAME);  // Boolean flag
-    });
+    // // Add isCancerAlley flag to each parish's properties
+    // allParishes.features.forEach(parish => {
+    //     parish.properties.isCancerAlley = cancerAlleyParishes.includes(parish.properties.NAME);  // Boolean flag
+    // });
+
+    return {
+        homePriceData: homePriceData,
+        allParishes: allParishes,
+        laRiver: data[2],
+        triSites: data[3],
+        background_states: data[4]
+    };
 }
 
 // Joins parish geographic data with home price data by matching parish names
 function joinData(parishes, homePriceData) {
     // Transform each parish feature by adding home price data
     return parishes.map(parish => {
-        // Get parish name (note: duplicate property access suggests possible typo - should check if one is NAME10 or similar)
-        var parishName = parish.properties.NAME;
+        var parishName = parish.properties.NAME; // Get parish name
         
         // Find matching home price record using flexible name matching
         var match = homePriceData.find(d => 
@@ -284,9 +285,9 @@ function makeColorScale(data) {
 }
 
 // Creates a color legend visualizing the home price scale
-function setLegend(colorScale, homePriceData, options = {}) {
+function setLegend(colorScale) {
     // Default configuration for legend appearance
-    const defaults = {
+    const config = {
         width: 200,            // Total width of legend SVG
         height: 150,           // Total height of legend SVG
         itemHeight: 25,        // Vertical space per legend item
@@ -300,9 +301,6 @@ function setLegend(colorScale, homePriceData, options = {}) {
             left: 10
         }
     };
-    
-    // Merge default options with any user-provided overrides
-    const config = { ...defaults, ...options };
     
     // Clear previous legend and create new SVG container
     const legend = d3.select("#legendContainer")
