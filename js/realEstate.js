@@ -60,7 +60,6 @@ function setMap() {
     ];
 
     // Process all loaded data when ready
-    // Promise.all(promises).then(callback);  // Wait for all promises to resolve
     Promise.all(promises).then(function(data) {  // Wait for all promises to resolve
         var homePriceData = data[0];             // Extract home price data (index 0)
         var allParishes = topojson.feature(data[1], data[1].objects.LA_county); // Convert TopoJSON to GeoJSON for parishes
@@ -78,15 +77,42 @@ function setMap() {
                 parish.properties.NAME.includes(d.RegionName.replace(" Parish", "")) ||  // Case 2: Handle "Parish" suffix
                 parish.properties.NAME.replace("St. ", "Saint ") === d.RegionName.replace(" Parish", "")  // Case 3: Handle "St." vs "Saint"
             );
-            
-            return {                              // Return enhanced feature:
-                ...parish,                        // Spread existing properties
-                properties: {                     // Add new properties:
-                    ...parish.properties,         // Keep existing
-                    home_price: match ? parseFloat(match["2024-12-31"]) : null,  // Add price or null if no match
-                    isCancerAlley: cancerAlleyParishes.includes(parish.properties.NAME)  // Boolean flag
+
+            // Create a brand new empty object that will store enhanced parish data
+            var enhancedParish = {}; // This ensures we don't accidentally modify the original parish object
+
+            // STEP 1: Copy all top-level properties from the original parish object
+            for (var key in parish) { // This includes things like the geometry and type properties
+                if (parish.hasOwnProperty(key)) { // Check if this property belongs directly to the parish object
+                    enhancedParish[key] = parish[key]; // Copy each property from original parish to the new enhanced Parish
                 }
-            };
+            }
+
+            // STEP 2: Create a fresh properties object inside enhanced parish
+            enhancedParish.properties = {};  // Put all property data here, both original and new
+
+            // STEP 3: Copy all existing properties from the original parish's properties
+            for (var prop in parish.properties) { // This includes things like NAME, POPULATION, etc. that were in parish.properties
+                if (parish.properties.hasOwnProperty(prop)) { // Verify this is a direct property
+                    enhancedParish.properties[prop] = parish.properties[prop]; // Copy each property from original to the enhanced version
+                }
+            }
+
+            // STEP 4: Add two new custom properties to the properties object
+            // Property 1: home_price - adds price data if available
+            enhancedParish.properties.home_price = match ?  // Check for a matching price record
+                parseFloat(match["2024-12-31"]) :  // If yes, convert price string to a number
+                null;  // If no match found, store null (no data available)
+
+            // Property 2: isCancerAlley - flags if parish is in Cancer Alley
+            enhancedParish.properties.isCancerAlley = cancerAlleyParishes.includes(parish.properties.NAME);  
+                // Checks if parish name exists in the predefined cancerAlleyParishes list
+                // Returns true (is in Cancer Alley) or false (is not in Cancer Alley)
+
+            // Finally, return the complete enhanced parish object
+            // Now containing all original data plus two new properties
+            return enhancedParish;
+
         });
 
         // Generate color scale function for home price visualization
@@ -141,7 +167,7 @@ function setMap() {
         });
 
         // Add legend to explain color scale
-        setLegend(colorScale, homePriceData);            // Create and position color legend
+        setLegend(colorScale);            // Create and position color legend
         
         // Add parish name labels after drawing parish shapes
         g.selectAll(".parish-label")                     // Select all parish labels (empty initial selection)
@@ -205,11 +231,6 @@ function callback(data) {
 
     // Merge home price data with parish geographic features
     allParishes.features = joinData(allParishes.features, homePriceData);
-    
-    // // Add isCancerAlley flag to each parish's properties
-    // allParishes.features.forEach(parish => {
-    //     parish.properties.isCancerAlley = cancerAlleyParishes.includes(parish.properties.NAME);  // Boolean flag
-    // });
 
     return {
         homePriceData: homePriceData,
