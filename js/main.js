@@ -1,16 +1,14 @@
-
-//insert code here!
+// creates an array of attributes that will be visualized on the mpa
 var attrArray = [
     "Total Population",
     "White Population",
     "Black Population",
     "Poverty Rates",
-    "Cancer Incident Rate/ 100000" // Corrected
+    "Cancer Incident Rate/ 100000" 
   ];
-  
-
+// sets the initial attribute to be Total Population as default
 var expressed = attrArray[0]
-
+// when window loads setMap function will be run to make the map
 window.onload = setMap;
 
 // set up map
@@ -27,7 +25,7 @@ function setMap(){
          .attr("width", width)
          .attr("height", height);
 
- //create Albers equal area conic projection centered on France
+ //defines the projection
     var projection = d3.geoAlbers()
         .center([0, 30.2])
         .rotate([91,2, 0]) 
@@ -35,9 +33,11 @@ function setMap(){
         .scale(27500)
         .translate([width / 2 - 400 , height / 2 + 800]);
 
+    //defines path generator
     var path = d3.geoPath()
         .projection(projection);
 
+    //loads multiple datasets and then passes them to the callback function once loaded
     var promises = [
         d3.csv("data/LA_layer_data.csv"),
         d3.json("data/LA_county.topojson"),
@@ -50,6 +50,7 @@ function setMap(){
 
     // callback function
     function callback(data){
+        // extracts each dataset from the loaded array
         var csvData = data[0];
         var county = data[1],
             cancer_parish = data[2],
@@ -68,6 +69,7 @@ function setMap(){
         console.log(la_river)
         console.log(tri_sites)
 
+        //calls the joindata funciton to link csv data to GeoJSON features
         la_cancer_parish.features = joinData(la_cancer_parish.features, csvData);
         //console.log(la_cancer_parish.features[0].properties); // to verify
          
@@ -195,7 +197,7 @@ function setEnumnerationUnits(la_cancer_parish, map, path, colorScale){
             return colorScale(d.properties[expressed]);
         })
 };
-//function to recolor the map
+//function to recolor the map to update with attribute changes
 function recolorMap(colorScale){
     d3.selectAll(".cancer_parish")
         .transition()
